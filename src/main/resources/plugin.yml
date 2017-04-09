@@ -1,0 +1,8 @@
+name: Hostile
+description: Custom Hostile Mobs
+author: StarTux
+version: 0.1
+main: com.winthier.hostile.HostilePlugin
+depend: [ Custom, GenericEvents, Ore ]
+commands: {}
+permissions: {}
