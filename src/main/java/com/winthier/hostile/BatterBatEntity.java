@@ -20,6 +20,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.material.MaterialData;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Consumer;
 import org.bukkit.util.Vector;
 
@@ -133,6 +135,7 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
             block = blocks.get(random.nextInt(blocks.size()));
             entity.teleport(block.getLocation().add(0.5, 0.5, 0.5));
             if (nearTarget && block.getY() > 76 && random.nextInt(20) == 0) {
+                entity.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 20 * 3, 0, true), true);
                 Location loc = block.getLocation().add(0.5, 0.5, 0.5);
                 switch (random.nextInt(5)) {
                 case 0:
