@@ -144,7 +144,7 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
                 switch (random.nextInt(5)) {
                 case 0:
                     entity.getWorld().spawnFallingBlock(loc, new MaterialData(Material.SAND)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -1, 0), new MaterialData(Material.SAND)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -2, 0), new MaterialData(Material.TNT, (byte)1)).setDropItem(false);
                     entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), new MaterialData(Material.SAND)).setDropItem(false);
                     entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), new MaterialData(Material.SAND)).setDropItem(false);
                     entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), new MaterialData(Material.SAND)).setDropItem(false);
@@ -152,7 +152,7 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
                     break;
                 case 1:
                     entity.getWorld().spawnFallingBlock(loc, new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -1, 0), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -2, 0), new MaterialData(Material.TNT, (byte)1)).setDropItem(false);
                     entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
                     entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
                     entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
@@ -160,7 +160,7 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
                     break;
                 case 2:
                     entity.getWorld().spawnFallingBlock(loc, new MaterialData(Material.GRAVEL)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -1, 0), new MaterialData(Material.GRAVEL)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -2, 0), new MaterialData(Material.TNT, (byte)1)).setDropItem(false);
                     entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), new MaterialData(Material.GRAVEL)).setDropItem(false);
                     entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), new MaterialData(Material.GRAVEL)).setDropItem(false);
                     entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), new MaterialData(Material.GRAVEL)).setDropItem(false);
