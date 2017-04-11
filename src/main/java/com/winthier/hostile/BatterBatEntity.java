@@ -108,21 +108,25 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
             blocks.add(block.getRelative(BlockFace.EAST));
             blocks.add(block.getRelative(BlockFace.SOUTH));
             blocks.add(block.getRelative(BlockFace.WEST));
-            boolean nearTarget = dirX * dirX + dirZ * dirZ < 25;
+            boolean nearTarget = dirX * dirX + dirZ * dirZ <= 4;
             if (!nearTarget) {
                 if (dirX < 0) {
+                    blocks.add(block.getRelative(-1, 0, 0));
                     blocks.add(block.getRelative(-1, 0, 0));
                     blocks.add(block.getRelative(-1, 0, 0));
                 }
                 if (dirX > 0) {
                     blocks.add(block.getRelative(1, 0, 0));
                     blocks.add(block.getRelative(1, 0, 0));
+                    blocks.add(block.getRelative(1, 0, 0));
                 }
                 if (dirZ < 0) {
                     blocks.add(block.getRelative(0, 0, -1));
                     blocks.add(block.getRelative(0, 0, -1));
+                    blocks.add(block.getRelative(0, 0, -1));
                 }
                 if (dirZ > 0) {
+                    blocks.add(block.getRelative(0, 0, 1));
                     blocks.add(block.getRelative(0, 0, 1));
                     blocks.add(block.getRelative(0, 0, 1));
                 }
@@ -134,21 +138,40 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
             Random random = new Random(System.currentTimeMillis());
             block = blocks.get(random.nextInt(blocks.size()));
             entity.teleport(block.getLocation().add(0.5, 0.5, 0.5));
-            if (nearTarget && block.getY() > 76 && random.nextInt(20) == 0) {
+            if (nearTarget && block.getY() > 76 && random.nextInt(10) == 0) {
                 entity.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 20 * 3, 0, true), true);
                 Location loc = block.getLocation().add(0.5, 0.5, 0.5);
                 switch (random.nextInt(5)) {
                 case 0:
                     entity.getWorld().spawnFallingBlock(loc, new MaterialData(Material.SAND)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -1, 0), new MaterialData(Material.SAND)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), new MaterialData(Material.SAND)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), new MaterialData(Material.SAND)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), new MaterialData(Material.SAND)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, 1), new MaterialData(Material.SAND)).setDropItem(false);
                     break;
                 case 1:
                     entity.getWorld().spawnFallingBlock(loc, new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -1, 0), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, 1), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
                     break;
                 case 2:
                     entity.getWorld().spawnFallingBlock(loc, new MaterialData(Material.GRAVEL)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -1, 0), new MaterialData(Material.GRAVEL)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), new MaterialData(Material.GRAVEL)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), new MaterialData(Material.GRAVEL)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), new MaterialData(Material.GRAVEL)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, 1), new MaterialData(Material.GRAVEL)).setDropItem(false);
                     break;
                 case 3:
                     entity.getWorld().spawnFallingBlock(loc, new MaterialData(Material.MAGMA)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), new MaterialData(Material.MAGMA)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), new MaterialData(Material.MAGMA)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), new MaterialData(Material.MAGMA)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, 1), new MaterialData(Material.MAGMA)).setDropItem(false);
                     break;
                 case 4:
                     entity.getWorld().spawnEntity(loc, EntityType.PRIMED_TNT);
