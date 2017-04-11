@@ -122,7 +122,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         if (block.getY() - player.getLocation().getBlockY() > 32) return 0;
         if (block.getRelative(0, 1, 0).getType() != Material.AIR) return 0;
         Location location = block.getLocation().add(0.5, 0.0, 0.5);
-        int count = random.nextInt(6) + 2;
+        int count = random.nextInt(9) + 3;
         for (int i = 0; i < count; i += 1) {
             CustomEntity mob = mobs.get(random.nextInt(mobs.size()));
             CustomPlugin.getInstance().getEntityManager().spawnEntity(location, mob.getCustomId());
