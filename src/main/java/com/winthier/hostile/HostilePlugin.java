@@ -128,7 +128,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             CustomPlugin.getInstance().getEntityManager().spawnEntity(location, mob.getCustomId());
         }
         if (count > 0) {
-            block.getWorld().playSound(block.getLocation(), Sound.ENTITY_ENDERDRAGON_AMBIENT, SoundCategory.HOSTILE, 1.0f, 2.0f);
+            block.getWorld().playSound(block.getLocation(), Sound.ENTITY_ENDERDRAGON_AMBIENT, SoundCategory.HOSTILE, 1.5f, 2.0f);
             getLogger().info(String.format("%d hostiles spawned for %s at %s %d,%d,%d", count, player.getName(), block.getWorld().getName(), block.getX(), block.getY(), block.getZ()));
         }
         return count;
