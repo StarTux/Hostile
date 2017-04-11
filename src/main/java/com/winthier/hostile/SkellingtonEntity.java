@@ -35,6 +35,9 @@ public final class SkellingtonEntity implements CustomEntity, HostileMob {
                 skeleton.getEquipment().setItemInMainHand(getBow());
                 skeleton.getEquipment().setItemInOffHand(new ItemStack(Material.SHIELD));
                 skeleton.getEquipment().setHelmet(new ItemStack(Material.IRON_HELMET));
+                skeleton.getEquipment().setHelmetDropChance(0);
+                skeleton.getEquipment().setItemInMainHandDropChance(0);
+                skeleton.getEquipment().setItemInOffHandDropChance(0);
                 skeleton.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(HEALTH);
                 skeleton.setHealth(HEALTH);
             }

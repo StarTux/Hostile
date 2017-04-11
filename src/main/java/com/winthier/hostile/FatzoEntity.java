@@ -30,6 +30,10 @@ public final class FatzoEntity implements CustomEntity, HostileMob {
                 zombie.getEquipment().setChestplate(makeArmor(Material.CHAINMAIL_CHESTPLATE, 3));
                 zombie.getEquipment().setLeggings(makeArmor(Material.CHAINMAIL_LEGGINGS, 3));
                 zombie.getEquipment().setBoots(makeArmor(Material.CHAINMAIL_BOOTS, 3));
+                zombie.getEquipment().setHelmetDropChance(0);
+                zombie.getEquipment().setChestplateDropChance(0);
+                zombie.getEquipment().setLeggingsDropChance(0);
+                zombie.getEquipment().setBootsDropChance(0);
                 zombie.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(HEALTH);
                 zombie.setHealth(HEALTH);
                 zombie.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(SPEED);
