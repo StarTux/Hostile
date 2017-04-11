@@ -80,6 +80,7 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
                 if (online.getGameMode() != GameMode.SURVIVAL
                     && online.getGameMode() != GameMode.ADVENTURE) continue;
                 Block pb = online.getLocation().getBlock();
+                if (pb.getY() < pb.getWorld().getHighestBlockYAt(pb.getX(), pb.getZ())) continue;
                 int dx = pb.getX() - block.getX();
                 int dz = pb.getZ() - block.getZ();
                 int dist = dx * dx + dz * dz;
