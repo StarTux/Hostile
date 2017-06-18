@@ -11,41 +11,38 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Zombie;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.util.Consumer;
 
 @Getter @RequiredArgsConstructor
 public final class FatzoEntity implements CustomEntity, HostileMob {
     private final HostilePlugin plugin;
-    private final String customId = "hostile:fatzo";
+    private final Type hostileType = Type.FATZO;
+    private final String customId = hostileType.customId;
     private static final double HEALTH = 50;
     private static final double SPEED = 0.2;
 
     @Override
     public Entity spawnEntity(Location location) {
-        Zombie zombie = location.getWorld().spawn(location, Zombie.class, new Consumer<Zombie>() {
-            @Override
-            public void accept(Zombie zombie) {
-                zombie.setCustomName("Fatzo");
-                zombie.getEquipment().setHelmet(makeArmor(Material.CHAINMAIL_HELMET, 3));
-                zombie.getEquipment().setChestplate(makeArmor(Material.CHAINMAIL_CHESTPLATE, 3));
-                zombie.getEquipment().setLeggings(makeArmor(Material.CHAINMAIL_LEGGINGS, 3));
-                zombie.getEquipment().setBoots(makeArmor(Material.CHAINMAIL_BOOTS, 3));
-                zombie.getEquipment().setHelmetDropChance(0);
-                zombie.getEquipment().setChestplateDropChance(0);
-                zombie.getEquipment().setLeggingsDropChance(0);
-                zombie.getEquipment().setBootsDropChance(0);
-                zombie.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(HEALTH);
-                zombie.setHealth(HEALTH);
-                zombie.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(SPEED);
-            }
-        });
-        return zombie;
+        return location.getWorld().spawn(location, Zombie.class, e -> {
+                e.setCustomName("Fatzo");
+                e.setBaby(false);
+                e.getEquipment().setHelmet(makeArmor(Material.CHAINMAIL_HELMET));
+                e.getEquipment().setChestplate(makeArmor(Material.CHAINMAIL_CHESTPLATE));
+                e.getEquipment().setLeggings(makeArmor(Material.CHAINMAIL_LEGGINGS));
+                e.getEquipment().setBoots(makeArmor(Material.CHAINMAIL_BOOTS));
+                e.getEquipment().setHelmetDropChance(0);
+                e.getEquipment().setChestplateDropChance(0);
+                e.getEquipment().setLeggingsDropChance(0);
+                e.getEquipment().setBootsDropChance(0);
+                e.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(HEALTH);
+                e.setHealth(HEALTH);
+                e.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(SPEED);
+            });
     }
 
-    private ItemStack makeArmor(Material mat, int lvl) {
+    private ItemStack makeArmor(Material mat) {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
-        meta.addEnchant(Enchantment.THORNS, lvl, true);
+        meta.addEnchant(Enchantment.THORNS, 15, true);
         item.setItemMeta(meta);
         return item;
     }

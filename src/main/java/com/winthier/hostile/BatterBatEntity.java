@@ -5,7 +5,6 @@ import com.winthier.custom.entity.EntityWatcher;
 import com.winthier.custom.entity.TickableEntity;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Random;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Difficulty;
@@ -22,28 +21,24 @@ import org.bukkit.entity.Player;
 import org.bukkit.material.MaterialData;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.util.Consumer;
 import org.bukkit.util.Vector;
 
 @Getter @RequiredArgsConstructor
 public final class BatterBatEntity implements CustomEntity, TickableEntity, HostileMob {
     private final HostilePlugin plugin;
-    private final String customId = "hostile:batter_bat";
+    private final Type hostileType = Type.BATTER_BAT;
+    private final String customId = hostileType.customId;
     private static final double HEALTH = 1;
 
     @Override
     public Entity spawnEntity(Location location) {
-        Bat bat = location.getWorld().spawn(location, Bat.class, new Consumer<Bat>() {
-            @Override
-            public void accept(Bat bat) {
-                bat.setCustomName("Batter Bat");
-                bat.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(HEALTH);
-                bat.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0.0);
-                bat.setHealth(HEALTH);
-                bat.setRemoveWhenFarAway(false);
-            }
-        });
-        return bat;
+        return location.getWorld().spawn(location, Bat.class, e -> {
+                e.setCustomName("Batter Bat");
+                e.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(HEALTH);
+                e.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(0.0);
+                e.setHealth(HEALTH);
+                e.setRemoveWhenFarAway(true);
+            });
     }
 
     @Override
@@ -53,9 +48,9 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
 
     @Override
     public void onTick(EntityWatcher entityWatcher) {
-        if (!plugin.isKillWorld(entityWatcher.getEntity().getWorld())
-            || entityWatcher.getEntity().getWorld().getDifficulty() == Difficulty.PEACEFUL) {
+        if (entityWatcher.getEntity().getWorld().getDifficulty() == Difficulty.PEACEFUL) {
             entityWatcher.getEntity().remove();
+            return;
         }
         ((Watcher)entityWatcher).onTick();
     }
@@ -71,6 +66,7 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
             ticks += 1;
             if (ticks < 3) return;
             ticks = 0;
+            entity.setAI(false);
             Block block = entity.getLocation().getBlock();
             Player target = null;
             int min = Integer.MAX_VALUE;
@@ -80,7 +76,7 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
                 if (online.getGameMode() != GameMode.SURVIVAL
                     && online.getGameMode() != GameMode.ADVENTURE) continue;
                 Block pb = online.getLocation().getBlock();
-                if (pb.getY() < pb.getWorld().getHighestBlockYAt(pb.getX(), pb.getZ())) continue;
+                if (pb.getLightFromSky() == 0) continue;
                 int dx = pb.getX() - block.getX();
                 int dz = pb.getZ() - block.getZ();
                 int dist = dx * dx + dz * dz;
@@ -92,17 +88,18 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
                 }
             }
             if (target == null) return;
+            Block targetBlock = target.getLocation().getBlock();
             ArrayList<Block> blocks = new ArrayList<>();
             blocks.add(block);
-            if (block.getY() < 80) {
+            if (block.getY() < targetBlock.getY() + 16) {
                 blocks.add(block.getRelative(BlockFace.UP));
                 blocks.add(block.getRelative(BlockFace.UP));
                 blocks.add(block.getRelative(BlockFace.UP));
                 blocks.add(block.getRelative(BlockFace.UP));
-            } else if (block.getY() < 100) {
+            } else if (block.getY() < targetBlock.getY() + 20) {
                 blocks.add(block.getRelative(BlockFace.UP));
             }
-            if (block.getY() > 90) blocks.add(block.getRelative(BlockFace.DOWN));
+            if (block.getY() > targetBlock.getY() + 24) blocks.add(block.getRelative(BlockFace.DOWN));
             blocks.add(block.getRelative(BlockFace.UP));
             blocks.add(block.getRelative(BlockFace.DOWN));
             blocks.add(block.getRelative(BlockFace.NORTH));
@@ -136,13 +133,15 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
                 if (iter.next().getType() != Material.AIR) iter.remove();
             }
             if (blocks.isEmpty()) return;
-            Random random = new Random(System.currentTimeMillis());
-            block = blocks.get(random.nextInt(blocks.size()));
-            entity.teleport(block.getLocation().add(0.5, 0.5, 0.5));
-            if (nearTarget && block.getY() > 76 && random.nextInt(10) == 0) {
-                entity.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 20 * 3, 0, true), true);
+            block = blocks.get(plugin.getRandom().nextInt(blocks.size()));
+            Location loc2 = block.getLocation().add(0.5, 0.5, 0.5);
+            loc2.setYaw(plugin.getRandom().nextFloat() * 360.0f);
+            entity.teleport(loc2);
+            if (!plugin.isKillWorld(entity.getWorld())) return;
+            if (nearTarget && block.getY() > 76 && plugin.getRandom().nextInt(10) == 0) {
+                entity.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 20 * 5, 0, true), true);
                 Location loc = block.getLocation().add(0.5, 0.5, 0.5);
-                switch (random.nextInt(5)) {
+                switch (plugin.getRandom().nextInt(5)) {
                 case 0:
                     entity.getWorld().spawnFallingBlock(loc, new MaterialData(Material.SAND)).setDropItem(false);
                     entity.getWorld().spawnFallingBlock(loc.clone().add(0, -2, 0), new MaterialData(Material.TNT, (byte)1)).setDropItem(false);

@@ -1,7 +1,8 @@
 package com.winthier.hostile;
 
 import com.winthier.custom.entity.CustomEntity;
-import com.winthier.custom.entity.EntityContext;
+import com.winthier.custom.entity.EntityWatcher;
+import com.winthier.custom.entity.TickableEntity;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Location;
@@ -11,75 +12,42 @@ import org.bukkit.SoundCategory;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Skeleton;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.util.Consumer;
 
 @Getter @RequiredArgsConstructor
-public final class SkellingtonEntity implements CustomEntity, HostileMob {
+public final class SkellingtonEntity implements CustomEntity, HostileMob, TickableEntity {
     private final HostilePlugin plugin;
-    private final String customId = "hostile:skellington";
-    private static final double HEALTH = 100;
+    private final Type hostileType = Type.SKELLINGTON;
+    private final String customId = hostileType.customId;
+    private static final double HEALTH = 50;
 
     @Override
     public Entity spawnEntity(Location location) {
-        Skeleton skeleton = location.getWorld().spawn(location, Skeleton.class, new Consumer<Skeleton>() {
-            @Override
-            public void accept(Skeleton skeleton) {
-                skeleton.setCustomName("Skellington");
-                skeleton.getEquipment().setItemInMainHand(getBow());
-                skeleton.getEquipment().setItemInOffHand(new ItemStack(Material.SHIELD));
-                skeleton.getEquipment().setHelmet(new ItemStack(Material.IRON_HELMET));
-                skeleton.getEquipment().setHelmetDropChance(0);
-                skeleton.getEquipment().setItemInMainHandDropChance(0);
-                skeleton.getEquipment().setItemInOffHandDropChance(0);
-                skeleton.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(HEALTH);
-                skeleton.setHealth(HEALTH);
-            }
-        });
-        return skeleton;
+        return location.getWorld().spawn(location, Skeleton.class, s -> {
+                s.setCustomName("Skellington");
+                s.getEquipment().setItemInMainHand(getBow());
+                s.getEquipment().setItemInOffHand(new ItemStack(Material.SHIELD));
+                s.getEquipment().setHelmet(new ItemStack(Material.IRON_HELMET));
+                s.getEquipment().setHelmetDropChance(0);
+                s.getEquipment().setItemInMainHandDropChance(0);
+                s.getEquipment().setItemInOffHandDropChance(0);
+                s.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(HEALTH);
+                s.setHealth(HEALTH);
+                s.setRemoveWhenFarAway(true);
+            });
     }
 
-    private void adaptToPlayer(Skeleton skeleton, Player player) {
-        if (!player.getWorld().equals(skeleton.getWorld())) return;
-        double distance = player.getLocation().distance(skeleton.getLocation());
-        if (distance < 4.0) {
-            if (skeleton.getEquipment().getItemInMainHand().getType() == Material.IRON_SWORD) return;
-            skeleton.getEquipment().setItemInMainHand(getSword());
-            skeleton.getAttribute(Attribute.GENERIC_KNOCKBACK_RESISTANCE).setBaseValue(1.0);
-        } else {
-            if (skeleton.getEquipment().getItemInMainHand().getType() == Material.BOW) return;
-            skeleton.getEquipment().setItemInMainHand(getBow());
-            skeleton.getAttribute(Attribute.GENERIC_KNOCKBACK_RESISTANCE).setBaseValue(0.0);
-        }
-        skeleton.getWorld().playSound(skeleton.getEyeLocation(), Sound.ENTITY_SNOWBALL_THROW, SoundCategory.HOSTILE, 1.0f, 0.8f);
+    @Override
+    public EntityWatcher createEntityWatcher(Entity e) {
+        return new Watcher((Skeleton)e, this);
     }
 
-    @EventHandler
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent event, EntityContext context) {
-        Player player;
-        if (context.getPosition() == EntityContext.Position.ENTITY) {
-            if (event.getDamager() instanceof Player) {
-                player = (Player)event.getDamager();
-            } else if (event.getDamager() instanceof Projectile
-                       && ((Projectile)event.getDamager()).getShooter() instanceof Player) {
-                player = (Player)((Projectile)event.getDamager()).getShooter();
-            } else {
-                event.setCancelled(true);
-                return;
-            }
-        } else if (context.getPosition() == EntityContext.Position.DAMAGER) {
-            if (!(event.getEntity() instanceof Player)) return;
-            player = (Player)event.getEntity();
-        } else {
-            return;
-        }
-        adaptToPlayer((Skeleton)context.getEntity(), player);
+    @Override
+    public void onTick(EntityWatcher watcher) {
+        ((Watcher)watcher).onTick();
     }
 
     private ItemStack getSword() {
@@ -96,5 +64,31 @@ public final class SkellingtonEntity implements CustomEntity, HostileMob {
         meta.addEnchant(Enchantment.ARROW_FIRE, 1, true);
         item.setItemMeta(meta);
         return item;
+    }
+
+    @Getter @RequiredArgsConstructor
+    class Watcher implements EntityWatcher {
+        private final Skeleton entity;
+        private final SkellingtonEntity customEntity;
+        private int ticks;
+
+        void onTick() {
+            ticks += 1;
+            if (ticks % 10 != 0) return;
+            LivingEntity target = entity.getTarget();
+            if (target == null) return;
+            if (!target.getWorld().equals(entity.getWorld())) return;
+            double distance = target.getLocation().distance(entity.getLocation());
+            if (distance < 4.0) {
+                if (entity.getEquipment().getItemInMainHand().getType() == Material.IRON_SWORD) return;
+                entity.getEquipment().setItemInMainHand(getSword());
+                entity.getAttribute(Attribute.GENERIC_KNOCKBACK_RESISTANCE).setBaseValue(1.0);
+            } else {
+                if (entity.getEquipment().getItemInMainHand().getType() == Material.BOW) return;
+                entity.getEquipment().setItemInMainHand(getBow());
+                entity.getAttribute(Attribute.GENERIC_KNOCKBACK_RESISTANCE).setBaseValue(0.0);
+            }
+            entity.getWorld().playSound(entity.getEyeLocation(), Sound.ENTITY_SNOWBALL_THROW, SoundCategory.HOSTILE, 1.0f, 0.8f);
+        }
     }
 }
