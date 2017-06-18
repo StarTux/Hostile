@@ -83,6 +83,7 @@ public final class PetardEntity implements CustomEntity, HostileMob, TickableEnt
             } else {
                 countdown -= 1;
                 if (countdown < 0) {
+                    entity.setCustomName("Petard");
                     entity.getWorld().createExplosion(entity.getEyeLocation(), 4f, true);
                     entity.remove();
                 } else {

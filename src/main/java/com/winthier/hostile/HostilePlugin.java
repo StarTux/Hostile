@@ -28,7 +28,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
     private final Random random = new Random(System.currentTimeMillis());
 
     class Session {
-        private long lastSpawn;
+        private long lastKill;
         private int level;
         private int hostileSpawnedCount;
         private int score;
@@ -97,18 +97,17 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             session.level += 1;
             session.hostileSpawnedCount = 0;
             session.score = 0;
-        } else if (session.lastSpawn + 1000 * 120 < now) {
+        } else if (session.lastKill + 1000 * 120 < now) {
             session.level -= 1;
             session.hostileSpawnedCount = 0;
             session.score = 0;
-            session.lastSpawn = now;
         }
         for (int i = 0; i < 16 && session.hostileSpawnedCount < session.level; i += 1) {
             if (tryToSpawnMobsForPlayer(player)) {
                 session.hostileSpawnedCount += 1;
-                session.lastSpawn = now;
             }
         }
+        session.lastKill = now;
     }
 
     @EventHandler
