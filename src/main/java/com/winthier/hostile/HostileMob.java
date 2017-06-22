@@ -13,53 +13,34 @@ import org.bukkit.inventory.ItemStack;
 
 public interface HostileMob extends CustomEntity {
     enum Type {
-        FART_GOBLIN(10, 0) {
-            public CustomEntity newInstance(HostilePlugin plugin) {
-                return new FartGoblinEntity(plugin);
-            }
-        },
-        BATTER_BAT(5, 20) {
-            public CustomEntity newInstance(HostilePlugin plugin) {
-                return new BatterBatEntity(plugin);
-            }
-        },
-        FATZO(10, 0) {
-            public CustomEntity newInstance(HostilePlugin plugin) {
-                return new FatzoEntity(plugin);
-            }
-        },
-        SKELLINGTON(10, 0) {
-            public CustomEntity newInstance(HostilePlugin plugin) {
-                return new SkellingtonEntity(plugin);
-            }
-        },
-        PETARD(10, 15) {
-            public CustomEntity newInstance(HostilePlugin plugin) {
-                return new PetardEntity(plugin);
-            }
-        },
-        ANGRY_PARROT(5, 10) {
-            public CustomEntity newInstance(HostilePlugin plugin) {
-                return new AngryParrotEntity(plugin);
-            }
-        },
-        QUEEN_SPIDER(5, 5) {
-            public CustomEntity newInstance(HostilePlugin plugin) {
-                return new QueenSpiderEntity(plugin);
-            }
-        };
+        FART_GOBLIN(FartGoblinEntity.class, 10, 0),
+        FATZO(FatzoEntity.class, 10, 0),
+        SKELLINGTON(SkellingtonEntity.class, 10, 0),
+        QUEEN_SPIDER(QueenSpiderEntity.class, 5, 5),
+        ANGRY_PARROT(AngryParrotEntity.class, 5, 10),
+        BATTER_BAT(BatterBatEntity.class, 5, 15),
+        PETARD(PetardEntity.class, 10, 20);
 
+        public final Class<? extends CustomEntity> clazz;
         public final int chance;
         public final int minLevel;
         public final String customId;
 
-        Type(int chance, int minLevel) {
+        Type(Class<? extends CustomEntity> clazz, int chance, int minLevel) {
+            this.clazz = clazz;
             this.chance = chance;
             this.minLevel = minLevel;
             this.customId = "hostile:" + name().toLowerCase();
         }
 
-        abstract CustomEntity newInstance(HostilePlugin plugin);
+        CustomEntity newInstance(HostilePlugin plugin) {
+            try {
+                return clazz.getConstructor(HostilePlugin.class).newInstance(plugin);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
     }
 
     Type getHostileType();
