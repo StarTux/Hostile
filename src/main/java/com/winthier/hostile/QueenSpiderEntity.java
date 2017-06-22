@@ -58,6 +58,7 @@ public final class QueenSpiderEntity implements CustomEntity, HostileMob, Tickab
             ticks += 1;
             if (ticks % 20 != 0) return;
             if (entity.getTarget() == null) return;
+            if (entity.getLocation().getBlock().getType() == Material.AIR) entity.getLocation().getBlock().setType(Material.WEB);
             countdown -= plugin.getRandom().nextInt(3) * 20;
             if (countdown > 0) {
                 return;
@@ -66,12 +67,16 @@ public final class QueenSpiderEntity implements CustomEntity, HostileMob, Tickab
             }
             entity.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 60, 0, true), true);
             entity.getWorld().playSound(entity.getEyeLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.HOSTILE, 2.0f, 1.2f);
-            int babyCount = 0;
-            for (Entity nearby: entity.getNearbyEntities(8, 8, 8)) {
-                if (nearby.getType() == EntityType.CAVE_SPIDER) babyCount += 1;
+            if (!plugin.isKillWorld(entity.getWorld())) {
+                if (plugin.getRandom().nextInt(3) == 0) entity.teleport(entity.getTarget());
+                return;
             }
-            if (babyCount >= 8) return;
             if (plugin.getRandom().nextInt(3) == 0) {
+                int babyCount = 0;
+                for (Entity nearby: entity.getNearbyEntities(8, 8, 8)) {
+                    if (nearby.getType() == EntityType.CAVE_SPIDER) babyCount += 1;
+                }
+                if (babyCount >= 8) return;
                 int amount = plugin.getRandom().nextInt(5) + 1;
                 for (int i = 0; i < amount; i += 1) {
                     CaveSpider baby = entity.getWorld().spawn(entity.getLocation(), CaveSpider.class);

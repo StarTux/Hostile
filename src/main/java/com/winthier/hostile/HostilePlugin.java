@@ -53,7 +53,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         private long lastKill;
         private Loc loc;
         private int level;
-        private int hostileSpawnedCount;
+        private int mobsToSpawn;
         private int score;
     }
 
@@ -93,6 +93,11 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             } else {
                 sender.sendMessage(target.getName() + " " + session);
             }
+        } else if ("level".equals(cmd) && args.length == 2) {
+            int newLevel = Integer.parseInt(args[1]);
+            getSession(player).level = newLevel;
+            getSession(player).mobsToSpawn = newLevel;
+            getSession(player).score = 0;
         } else {
             return false;
         }
@@ -152,27 +157,29 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         Loc newLoc = new Loc(player.getLocation().getBlock());
         if (session.loc == null || !session.loc.world.equals(newLoc.world) || session.loc.dist(newLoc) > 127) {
             session.level = 0;
-            session.hostileSpawnedCount = 0;
+            session.mobsToSpawn = 0;
             session.score = 0;
         } else if (session.lastKill + 1000 * 60 < now) {
             session.level -= 1;
             if (session.level < 0) session.level = 0;
-            session.hostileSpawnedCount = session.level;
+            session.mobsToSpawn = 0;
             session.score = 0;
         } else if (session.score >= session.level * scoreFactor) {
             session.level += 1;
-            session.hostileSpawnedCount = 0;
+            session.mobsToSpawn = session.level;
             session.score = 0;
         }
-        for (int i = 0; i < 8; i += 1) {
-            if (tryToSpawnMobForPlayer(player)) {
-                session.hostileSpawnedCount += 1;
-                break;
+        if (session.mobsToSpawn > 0) {
+            for (int i = 0; i < 8; i += 1) {
+                if (tryToSpawnMobForPlayer(player)) {
+                    session.mobsToSpawn -= 1;
+                    break;
+                }
             }
-        }
-        for (int i = 0; i < session.level && session.hostileSpawnedCount < session.level / 2; i += 1) {
-            if (tryToSpawnMobForPlayer(player)) {
-                session.hostileSpawnedCount += 1;
+            for (int i = 0; i < session.mobsToSpawn && session.mobsToSpawn > session.level / 2; i += 1) {
+                if (tryToSpawnMobForPlayer(player)) {
+                    session.mobsToSpawn -= 1;
+                }
             }
         }
         session.loc = newLoc;

@@ -10,6 +10,7 @@ commands:
     permission: hostile.hostile
     usage: |-
       /hostile info [player]
+      /hostile level <level>
 permissions:
   hostile.hostile:
     description: Use /hostile
