@@ -67,4 +67,9 @@ public interface HostileMob extends CustomEntity {
     default void entityWasSpawned(EntityWatcher watcher) {
         watcher.getEntity().addScoreboardTag("ShowOnMiniMap");
     }
+
+    @Override
+    default void entityWillUnload(EntityWatcher watcher) {
+        watcher.getEntity().remove();
+    }
 }
