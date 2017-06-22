@@ -13,6 +13,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.CaveSpider;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Spider;
 import org.bukkit.potion.PotionEffect;
@@ -65,10 +66,16 @@ public final class QueenSpiderEntity implements CustomEntity, HostileMob, Tickab
             }
             entity.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 60, 0, true), true);
             entity.getWorld().playSound(entity.getEyeLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.HOSTILE, 2.0f, 1.2f);
+            int babyCount = 0;
+            for (Entity nearby: entity.getNearbyEntities(8, 8, 8)) {
+                if (nearby.getType() == EntityType.CAVE_SPIDER) babyCount += 1;
+            }
+            if (babyCount >= 8) return;
             if (plugin.getRandom().nextInt(3) == 0) {
                 int amount = plugin.getRandom().nextInt(5) + 1;
                 for (int i = 0; i < amount; i += 1) {
-                    entity.getWorld().spawn(entity.getLocation(), CaveSpider.class);
+                    CaveSpider baby = entity.getWorld().spawn(entity.getLocation(), CaveSpider.class);
+                    baby.addScoreboardTag("NoHostileScore");
                 }
             }
         }

@@ -4,5 +4,12 @@ author: StarTux
 version: 0.1
 main: com.winthier.hostile.HostilePlugin
 depend: [ Custom, GenericEvents, Ore ]
-commands: {}
-permissions: {}
+commands:
+  hostile:
+    description: Admin interface
+    permission: hostile.hostile
+    usage: |-
+      /hostile info [player]
+permissions:
+  hostile.hostile:
+    description: Use /hostile

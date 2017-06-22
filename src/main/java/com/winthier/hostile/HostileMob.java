@@ -18,7 +18,7 @@ public interface HostileMob extends CustomEntity {
                 return new FartGoblinEntity(plugin);
             }
         },
-        BATTER_BAT(5, 10) {
+        BATTER_BAT(5, 20) {
             public CustomEntity newInstance(HostilePlugin plugin) {
                 return new BatterBatEntity(plugin);
             }
@@ -33,17 +33,17 @@ public interface HostileMob extends CustomEntity {
                 return new SkellingtonEntity(plugin);
             }
         },
-        PETARD(10, 2) {
+        PETARD(10, 15) {
             public CustomEntity newInstance(HostilePlugin plugin) {
                 return new PetardEntity(plugin);
             }
         },
-        ANGRY_PARROT(5, 5) {
+        ANGRY_PARROT(5, 10) {
             public CustomEntity newInstance(HostilePlugin plugin) {
                 return new AngryParrotEntity(plugin);
             }
         },
-        QUEEN_SPIDER(5, 1) {
+        QUEEN_SPIDER(5, 5) {
             public CustomEntity newInstance(HostilePlugin plugin) {
                 return new QueenSpiderEntity(plugin);
             }

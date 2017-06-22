@@ -8,11 +8,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.UUID;
+import lombok.Data;
 import lombok.Getter;
+import lombok.Value;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Creature;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -27,8 +33,25 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
     private final ArrayList<String> killWorlds = new ArrayList<>();
     private final Random random = new Random(System.currentTimeMillis());
 
+    @Value
+    class Loc {
+        private final String world;
+        private final int x, y, z;
+        Loc(Block block) {
+            this.world = block.getWorld().getName();
+            this.x = block.getX();
+            this.y = block.getY();
+            this.z = block.getZ();
+        }
+        int dist(Loc other) {
+            return Math.max(Math.max(Math.abs(x - other.x), Math.abs(y - other.y)), Math.abs(z - other.z));
+        }
+    }
+
+    @Data
     class Session {
         private long lastKill;
+        private Loc loc;
         private int level;
         private int hostileSpawnedCount;
         private int score;
@@ -42,6 +65,38 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         sessions.clear();
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String alias, String args[]) {
+        Player player = sender instanceof Player ? (Player)sender : null;
+        String cmd = args.length > 0 ? args[0].toLowerCase() : null;
+        if (cmd == null) {
+            return false;
+        } else if ("info".equals(cmd) && args.length <= 2) {
+            Player target;
+            if (args.length < 2 && player == null) {
+                sender.sendMessage("Player expected");
+                return true;
+            } else if (args.length >= 2) {
+                target = getServer().getPlayerExact(args[1]);
+                if (target == null) {
+                    sender.sendMessage("Player not found: " + args[1]);
+                    return true;
+                }
+            } else {
+                target = player;
+            }
+            Session session = sessions.get(target.getUniqueId());
+            if (session == null) {
+                sender.sendMessage(target.getName() + " no session!");
+            } else {
+                sender.sendMessage(target.getName() + " " + session);
+            }
+        } else {
+            return false;
+        }
+        return true;
     }
 
     @EventHandler
@@ -84,6 +139,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             hostileMob = null;
             if (!(event.getEntity() instanceof Monster)) return;
             if (event.getEntity().getCustomName() != null) return;
+            if (event.getEntity().getScoreboardTags().contains("NoHostileScore")) return;
         }
         Session session = getSession(player);
         final int scoreFactor = 3;
@@ -93,20 +149,33 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             session.score += 1;
         }
         long now = System.currentTimeMillis();
-        if (session.score >= session.level * scoreFactor) {
+        Loc newLoc = new Loc(player.getLocation().getBlock());
+        if (session.loc == null || !session.loc.world.equals(newLoc.world) || session.loc.dist(newLoc) > 127) {
+            session.level = 0;
+            session.hostileSpawnedCount = 0;
+            session.score = 0;
+        } else if (session.lastKill + 1000 * 60 < now) {
+            session.level -= 1;
+            if (session.level < 0) session.level = 0;
+            session.hostileSpawnedCount = session.level;
+            session.score = 0;
+        } else if (session.score >= session.level * scoreFactor) {
             session.level += 1;
             session.hostileSpawnedCount = 0;
             session.score = 0;
-        } else if (session.lastKill + 1000 * 120 < now) {
-            session.level -= 1;
-            session.hostileSpawnedCount = 0;
-            session.score = 0;
         }
-        for (int i = 0; i < 16 && session.hostileSpawnedCount < session.level; i += 1) {
-            if (tryToSpawnMobsForPlayer(player)) {
+        for (int i = 0; i < 8; i += 1) {
+            if (tryToSpawnMobForPlayer(player)) {
+                session.hostileSpawnedCount += 1;
+                break;
+            }
+        }
+        for (int i = 0; i < session.level && session.hostileSpawnedCount < session.level / 2; i += 1) {
+            if (tryToSpawnMobForPlayer(player)) {
                 session.hostileSpawnedCount += 1;
             }
         }
+        session.loc = newLoc;
         session.lastKill = now;
     }
 
@@ -115,8 +184,8 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         sessions.remove(event.getEntity().getUniqueId());
     }
 
-    boolean tryToSpawnMobsForPlayer(Player player) {
-        int rad = 16;
+    boolean tryToSpawnMobForPlayer(Player player) {
+        int rad = 10 + random.nextInt(8);
         Block block = player.getLocation().getBlock();
         if (random.nextBoolean()) {
             block = block.getRelative(random.nextBoolean() ? rad : -rad,
@@ -136,7 +205,10 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
                 block = nextBlock;
             } while (block.getY() > 0);
         }
-        if (block.getY() < 1 || block.getY() > 128) return false;
+        if (block.getY() < 1 || block.getY() > 127 || block.isLiquid()) return false;
+        for (Entity nearby: block.getWorld().getNearbyEntities(block.getLocation().add(0.5, 0.0, 0.5), 8, 8, 8)) {
+            if (nearby.getType() == EntityType.PLAYER) return false;
+        }
         ArrayList<HostileMob.Type> types = new ArrayList<>();
         for (HostileMob.Type type: HostileMob.Type.values()) {
             if (getSession(player).level < type.minLevel) continue;
