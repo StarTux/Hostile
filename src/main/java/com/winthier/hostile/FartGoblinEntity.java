@@ -13,9 +13,10 @@ import org.bukkit.entity.AreaEffectCloud;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.entity.AreaEffectCloudApplyEvent;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
-import org.bukkit.potion.PotionData;
-import org.bukkit.potion.PotionType;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 @Getter @RequiredArgsConstructor
 public final class FartGoblinEntity implements CustomEntity, HostileMob {
@@ -44,11 +45,46 @@ public final class FartGoblinEntity implements CustomEntity, HostileMob {
         creeper.getWorld().playSound(creeper.getEyeLocation(), Sound.ENTITY_PLAYER_BURP, SoundCategory.HOSTILE, 1.0f, 0.01f);
         int offset = plugin.getRandom().nextInt(3);
         creeper.getWorld().spawn(creeper.getLocation().add(0, (double)offset, 0), AreaEffectCloud.class, c -> {
-                c.setBasePotionData(new PotionData(PotionType.POISON, false, false));
+                switch (plugin.getRandom().nextInt(10)) {
+                case 0:
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.WEAKNESS, 20 * 20, 0), true);
+                    break;
+                case 1:
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.SLOW, 20 * 20, 0), true);
+                    break;
+                case 2:
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.HARM, 1, 0), true);
+                    break;
+                case 3:
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.WITHER, 20 * 10, 0), true);
+                    break;
+                case 4:
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.LEVITATION, 20 * 3, 0), true);
+                    break;
+                case 5:
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.HUNGER, 20 * 10, 0), true);
+                    break;
+                case 6:
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.CONFUSION, 20 * 5, 0), true);
+                    break;
+                case 7:
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.BLINDNESS, 20 * 5, 0), true);
+                    break;
+                case 8:
+                default:
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.POISON, 20 * 10, 0), true);
+                    break;
+                }
                 c.setColor(Color.GREEN);
                 c.setDuration(200);
                 c.setRadius(2.0f);
                 c.setRadiusPerTick(1.0f / 100.0f);
+                c.setSource(creeper);
             });
+    }
+
+    @EventHandler
+    public void onAreaEffectCloudApply(AreaEffectCloudApplyEvent event, EntityContext context) {
+        event.getAffectedEntities().remove(context.getEntity());
     }
 }
