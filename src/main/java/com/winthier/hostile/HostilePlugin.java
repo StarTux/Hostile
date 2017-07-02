@@ -29,7 +29,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
 public final class HostilePlugin extends JavaPlugin implements Listener {
-    private final HashMap<UUID, Session> sessions = new HashMap<>();
     private final ArrayList<String> killWorlds = new ArrayList<>();
     private final Random random = new Random(System.currentTimeMillis());
 
@@ -48,15 +47,6 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         }
     }
 
-    @Data
-    class Session {
-        private long lastKill;
-        private Loc loc;
-        private int level;
-        private int mobsToSpawn;
-        private int score;
-    }
-
     @Override
     public void onEnable() {
         getServer().getPluginManager().registerEvents(this, this);
@@ -64,7 +54,6 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        sessions.clear();
     }
 
     @Override
@@ -73,31 +62,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         String cmd = args.length > 0 ? args[0].toLowerCase() : null;
         if (cmd == null) {
             return false;
-        } else if ("info".equals(cmd) && args.length <= 2) {
-            Player target;
-            if (args.length < 2 && player == null) {
-                sender.sendMessage("Player expected");
-                return true;
-            } else if (args.length >= 2) {
-                target = getServer().getPlayerExact(args[1]);
-                if (target == null) {
-                    sender.sendMessage("Player not found: " + args[1]);
-                    return true;
-                }
-            } else {
-                target = player;
-            }
-            Session session = sessions.get(target.getUniqueId());
-            if (session == null) {
-                sender.sendMessage(target.getName() + " no session!");
-            } else {
-                sender.sendMessage(target.getName() + " " + session);
-            }
-        } else if ("level".equals(cmd) && args.length == 2) {
-            int newLevel = Integer.parseInt(args[1]);
-            getSession(player).level = newLevel;
-            getSession(player).mobsToSpawn = newLevel;
-            getSession(player).score = 0;
+        } else if (cmd.equals("test")) {
         } else {
             return false;
         }
@@ -115,85 +80,8 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         }
     }
 
-    Session getSession(Player player) {
-        Session result = sessions.get(player.getUniqueId());
-        if (result == null) {
-            result = new Session();
-            sessions.put(player.getUniqueId(), result);
-        }
-        return result;
-    }
-
-    @EventHandler
-    public void onEntityDeath(EntityDeathEvent event) {
-        if (!killWorlds.contains(event.getEntity().getWorld().getName())) return;
-        Player player = event.getEntity().getKiller();
-        if (player == null) return;
-        if (!killWorlds.contains(player.getWorld().getName())) return;
-        switch (player.getGameMode()) {
-        case SURVIVAL:
-        case ADVENTURE:
-            break;
-        default: return;
-        }
-        CustomEntity customEntity = CustomPlugin.getInstance().getEntityManager().getCustomEntity(event.getEntity());
-        HostileMob hostileMob;
-        if (customEntity != null && customEntity instanceof HostileMob) {
-            hostileMob = (HostileMob)customEntity;
-        } else {
-            hostileMob = null;
-            if (!(event.getEntity() instanceof Monster)) return;
-            if (event.getEntity().getCustomName() != null) return;
-            if (event.getEntity().getScoreboardTags().contains("NoHostileScore")) return;
-        }
-        Session session = getSession(player);
-        final int scoreFactor = 3;
-        if (hostileMob != null) {
-            session.score += scoreFactor;
-        } else {
-            session.score += 1;
-        }
-        long now = System.currentTimeMillis();
-        Loc newLoc = new Loc(player.getLocation().getBlock());
-        if (session.loc == null || !session.loc.world.equals(newLoc.world) || session.loc.dist(newLoc) > 127) {
-            session.level = 0;
-            session.mobsToSpawn = 0;
-            session.score = 0;
-        } else if (session.lastKill + 1000 * 60 < now) {
-            session.level -= 1;
-            if (session.level < 0) session.level = 0;
-            session.mobsToSpawn = 0;
-            session.score = 0;
-        } else if (session.score >= session.level * scoreFactor) {
-            session.level += 1;
-            session.mobsToSpawn = session.level;
-            session.score = 0;
-        }
-        if (session.mobsToSpawn > 0) {
-            for (int i = 0; i < 8; i += 1) {
-                if (tryToSpawnMobForPlayer(player)) {
-                    session.mobsToSpawn -= 1;
-                    break;
-                }
-            }
-            for (int i = 0; i < session.mobsToSpawn && session.mobsToSpawn > session.level / 2; i += 1) {
-                if (tryToSpawnMobForPlayer(player)) {
-                    session.mobsToSpawn -= 1;
-                }
-            }
-        }
-        session.loc = newLoc;
-        session.lastKill = now;
-    }
-
-    @EventHandler
-    public void onPlayerDeatch(PlayerDeathEvent event) {
-        sessions.remove(event.getEntity().getUniqueId());
-    }
-
-    boolean tryToSpawnMobForPlayer(Player player) {
+    boolean tryToSpawnMob(Block block, int level) {
         int rad = 10 + random.nextInt(8);
-        Block block = player.getLocation().getBlock();
         if (random.nextBoolean()) {
             block = block.getRelative(random.nextBoolean() ? rad : -rad,
                                       random.nextInt(rad) - random.nextInt(rad),
@@ -218,7 +106,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         }
         ArrayList<HostileMob.Type> types = new ArrayList<>();
         for (HostileMob.Type type: HostileMob.Type.values()) {
-            if (getSession(player).level < type.minLevel) continue;
+            if (level < type.minLevel) continue;
             switch (type) {
             case BATTER_BAT:
             case ANGRY_PARROT:
@@ -236,9 +124,6 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         HostileMob.Type type = types.get(random.nextInt(types.size()));
         Location location = block.getLocation().add(0.5, 0.0, 0.5);
         EntityWatcher watcher = CustomPlugin.getInstance().getEntityManager().spawnEntity(location, type.customId);
-        if (watcher.getEntity() instanceof Creature) {
-            ((Creature)watcher.getEntity()).setTarget(player);
-        }
         return true;
     }
 
