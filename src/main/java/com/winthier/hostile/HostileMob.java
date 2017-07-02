@@ -17,9 +17,9 @@ public interface HostileMob extends CustomEntity {
         FATZO(FatzoEntity.class, 10, 0),
         SKELLINGTON(SkellingtonEntity.class, 10, 0),
         QUEEN_SPIDER(QueenSpiderEntity.class, 5, 5),
-        ANGRY_PARROT(AngryParrotEntity.class, 5, 10),
-        BATTER_BAT(BatterBatEntity.class, 5, 15),
-        PETARD(PetardEntity.class, 10, 20);
+        ANGRY_PARROT(AngryParrotEntity.class, 5, 0),
+        BATTER_BAT(BatterBatEntity.class, 3, 15),
+        PETARD(PetardEntity.class, 5, 20);
 
         public final Class<? extends CustomEntity> clazz;
         public final int chance;
