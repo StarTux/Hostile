@@ -16,7 +16,6 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Creature;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Monster;
@@ -61,12 +60,13 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String alias, String args[]) {
+    public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
         Player player = sender instanceof Player ? (Player)sender : null;
         String cmd = args.length > 0 ? args[0].toLowerCase() : null;
         if (cmd == null) {
             return false;
         } else if (cmd.equals("test")) {
+            sender.sendMessage("test");
         } else {
             return false;
         }
@@ -83,6 +83,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             event.addEntity(hostileType.newInstance(this));
         }
         event.addBlock(new MonsterHiveBlock(this));
+        event.addEntity(new MonsterHiveLevelEntity(this));
     }
 
     @EventHandler
@@ -108,6 +109,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
     public void onEntityDeath(EntityDeathEvent event) {
         if (!isKillWorld(event.getEntity().getWorld())) return;
         if (random.nextInt(10) > 0) return;
+        if (!(event.getEntity() instanceof Monster)) return;
         if (event.getEntity().getKiller() == null) return;
         Block block = event.getEntity().getKiller().getLocation().getBlock();
         if (!isKillWorld(block.getWorld())) return;
@@ -163,6 +165,11 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             } while (block.getY() > 0);
         }
         if (block.getY() < 1 || block.getY() > 127 || block.isLiquid()) return false;
+        switch (block.getBiome()) {
+        case MUSHROOM_ISLAND:
+        case MUSHROOM_ISLAND_SHORE:
+            return false;
+        }
         if (block.getRelative(0, 1, 0).getType() == Material.AIR) {
             block = block.getRelative(0, 1, 0);
         }
@@ -183,14 +190,15 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         return true;
     }
 
-    boolean tryToSpawnMob(Block block, int level, int tries) {
+    HostileMob.Type tryToSpawnMob(Block block, int level, int tries) {
         for (int i = 0; i < tries; i += 1) {
-            if (tryToSpawnMob(block, level)) return true;
+            HostileMob.Type type = tryToSpawnMob(block, level);
+            if (type != null) return type;
         }
-        return false;
+        return null;
     }
 
-    boolean tryToSpawnMob(Block block, int level) {
+    HostileMob.Type tryToSpawnMob(Block block, int level) {
         int rad = 10 + random.nextInt(8);
         if (random.nextBoolean()) {
             block = block.getRelative(random.nextBoolean() ? rad : -rad,
@@ -210,7 +218,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
                 block = nextBlock;
             } while (block.getY() > 0);
         }
-        if (block.getY() < 1 || block.getY() > 127 || block.isLiquid()) return false;
+        if (block.getY() < 1 || block.getY() > 127 || block.isLiquid()) return null;
         ArrayList<HostileMob.Type> types = new ArrayList<>();
         for (HostileMob.Type type: HostileMob.Type.values()) {
             if (level < type.minLevel) continue;
@@ -227,11 +235,11 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             }
             for (int i = 0; i < type.chance; i += 1) types.add(type);
         }
-        if (types.size() == 0) return false;
+        if (types.size() == 0) return null;
         HostileMob.Type type = types.get(random.nextInt(types.size()));
         Location location = block.getLocation().add(0.5, 0.0, 0.5);
         EntityWatcher watcher = CustomPlugin.getInstance().getEntityManager().spawnEntity(location, type.customId);
-        return true;
+        return type;
     }
 
     public boolean isKillWorld(World world) {
