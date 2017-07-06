@@ -169,6 +169,8 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         case MUSHROOM_ISLAND:
         case MUSHROOM_ISLAND_SHORE:
             return false;
+        default:
+            break;
         }
         if (block.getRelative(0, 1, 0).getType() == Material.AIR) {
             block = block.getRelative(0, 1, 0);
