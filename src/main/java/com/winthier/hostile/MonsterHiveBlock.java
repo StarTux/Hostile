@@ -31,6 +31,7 @@ import org.bukkit.inventory.ItemStack;
 public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
     public static final String CUSTOM_ID = "hostile:monster_hive";
     private final HostilePlugin plugin;
+    private static final int TICKS = 5;
 
     @Override
     public String getCustomId() {
@@ -86,11 +87,18 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
         private int ticksLived = 0;
         private int spawnCount = 0;
         @Setter private int level = 1;
+        private int spawnCooldown = 0;
+        private int armorCooldown = 0;
 
         void onTick() {
             if (!plugin.isKillWorld(block.getWorld())) return;
             if (plugin.getHiveTicks() == 0) {
                 plugin.registerHive(block, level);
+            }
+            if (block.getType() != Material.MOB_SPAWNER) {
+                CustomPlugin.getInstance().getBlockManager().removeBlockWatcher(this);
+                plugin.unregisterHive(block);
+                return;
             }
             ticksLived += 1;
             if (ticksLived > (level + 1) * 20 * 10) {
@@ -99,12 +107,7 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                 spawnCount = 0;
                 save();
             }
-            if (block.getType() != Material.MOB_SPAWNER) {
-                CustomPlugin.getInstance().getBlockManager().removeBlockWatcher(this);
-                plugin.unregisterHive(block);
-                return;
-            }
-            if (ticksLived % 5 == 0) {
+            if (ticksLived % TICKS == 0) {
                 int playersNearby = 0;
                 int hostilesNearby = 0;
                 final double radius = 32.0;
@@ -119,27 +122,43 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                     }
                 }
                 if (playersNearby > 0) {
-                    int dx = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
-                    int dy = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
-                    int dz = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
-                    if (dx != 0 || dy != 0 || dz != 0) {
-                        Block armor = block.getRelative(dx, dy, dz);
-                        int dist = Math.max(Math.abs(dx), Math.max(Math.abs(dy), Math.abs(dz)));
-                        if (dist == 1) {
-                            armor.setType(Material.WEB);
-                        } else if (dist == 2) {
-                            if (level >= 10) {
-                                armor.setType(Material.OBSIDIAN);
-                            } else if (level >= 5) {
-                                armor.setType(Material.ENDER_STONE);
+                    CreatureSpawner creatureSpawner = (CreatureSpawner)block.getState();
+                    if (creatureSpawner != null) creatureSpawner.setDelay(999);
+                    if (armorCooldown > 0) {
+                        armorCooldown -= TICKS;
+                    } else {
+                        armorCooldown = 40;
+                        int dx = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
+                        int dy = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
+                        int dz = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
+                        if (dx != 0 || dy != 0 || dz != 0) {
+                            Block armor = block.getRelative(dx, dy, dz);
+                            int dist = Math.max(Math.abs(dx), Math.max(Math.abs(dy), Math.abs(dz)));
+                            if (dist == 1) {
+                                if (level >= 10) {
+                                    armor.setType(Material.WEB);
+                                }
+                            } else if (dist == 2) {
+                                if (level >= 15) {
+                                    armor.setType(Material.OBSIDIAN);
+                                } else if (level >= 10) {
+                                    armor.setType(Material.ENDER_STONE);
+                                } else if (level >= 5) {
+                                    armor.setType(Material.STAINED_GLASS);
+                                }
                             }
                         }
                     }
-                    CreatureSpawner creatureSpawner = (CreatureSpawner)block.getState();
-                    if (creatureSpawner != null) creatureSpawner.setDelay(999);
-                    if (hostilesNearby <= level + 1) {
-                        HostileMob.Type type = plugin.tryToSpawnMob(block, level, 16);
-                        if (type != null) spawnCount += type.weight;
+                    if (hostilesNearby <= level && spawnCount <= level * 3) {
+                        if (spawnCooldown > 0) {
+                            spawnCooldown -= TICKS;
+                        } else {
+                            HostileMob.Type type = plugin.tryToSpawnMob(block, level, 16);
+                            if (type != null) {
+                                spawnCount += type.weight;
+                                spawnCooldown = 40;
+                            }
+                        }
                     }
                     Location levelLoc = block.getLocation().add(0.5, 1.5, 0.5);
                     for (Entity nearby: block.getWorld().getNearbyEntities(levelLoc, 1, 1, 1)) {
