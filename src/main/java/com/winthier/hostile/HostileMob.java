@@ -56,6 +56,7 @@ public interface HostileMob extends CustomEntity {
         ItemStack item = gen.getRandomLootItem();
         if (item == null) return;
         event.getDrops().add(item);
+        event.setDroppedExp((event.getDroppedExp() + 1) * 10);
     }
 
     @EventHandler(ignoreCancelled = true)
