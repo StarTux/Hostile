@@ -83,6 +83,7 @@ public final class AngryParrotEntity implements CustomEntity, TickableEntity, Ho
             for (Player online: entity.getWorld().getPlayers()) {
                 if (online.getGameMode() != GameMode.SURVIVAL
                     && online.getGameMode() != GameMode.ADVENTURE) continue;
+                if (online.isDead()) continue;
                 Block pb = online.getLocation().getBlock();
                 if (pb.getLightFromSky() == 0) continue;
                 int dx = pb.getX() - block.getX();

@@ -75,6 +75,7 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
             for (Player online: entity.getWorld().getPlayers()) {
                 if (online.getGameMode() != GameMode.SURVIVAL
                     && online.getGameMode() != GameMode.ADVENTURE) continue;
+                if (online.isDead()) continue;
                 Block pb = online.getLocation().getBlock();
                 if (pb.getLightFromSky() == 0) continue;
                 int dx = pb.getX() - block.getX();
