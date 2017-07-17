@@ -5,7 +5,9 @@ import com.winthier.custom.entity.EntityWatcher;
 import com.winthier.custom.event.CustomRegisterEvent;
 import com.winthier.custom.event.CustomTickEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import lombok.Getter;
@@ -23,6 +25,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.map.MapCursor;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
@@ -31,6 +35,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
     private final Random random = new Random(System.currentTimeMillis());
     private final Map<Loc, Integer> hives = new HashMap<>();
     private int hiveTicks = 0;
+    private int playerIndex = 0;
 
     @Value
     public final class Loc {
@@ -53,6 +58,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getScheduler().runTaskTimer(this, () -> on10Ticks(), 10, 10);
     }
 
     @Override
@@ -124,17 +130,26 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         hives.remove(new Loc(block));
     }
 
-    public Map<Loc, Integer> getHiveBlocks(Player player) {
-        Map<Loc, Integer> result = new HashMap<>();
-        if (!isKillWorld(player.getWorld())) return result;
-        String world = player.getWorld().getName();
-        Loc playerLoc = new Loc(player.getLocation().getBlock());
-        for (Loc loc: hives.keySet()) {
-            if (!loc.getWorld().equals(world)) continue;
-            int dist = loc.dist(playerLoc);
-            if (dist < 256) result.put(loc, hives.get(loc));
+    void on10Ticks() {
+        for (Player player: getServer().getOnlinePlayers()) {
+            if (!isKillWorld(player.getWorld())) {
+                player.removeMetadata("MiniMapCursors", this);
+                continue;
+            }
+            List<Map> list = new ArrayList<>();
+            String world = player.getWorld().getName();
+            Loc playerLoc = new Loc(player.getLocation().getBlock());
+            for (Loc loc: hives.keySet()) {
+                if (!loc.getWorld().equals(world)) continue;
+                int dist = loc.dist(playerLoc);
+                if (dist >= 256) continue;
+                Map<String, Object> map = new HashMap<>();
+                map.put("block", loc.getBlock());
+                map.put("type", MapCursor.Type.RED_MARKER);
+                list.add(map);
+            }
+            player.setMetadata("MiniMapCursors", new FixedMetadataValue(this, list));
         }
-        return result;
     }
 
     boolean tryToSpawnHive(Block block, int level, int tries) {
