@@ -1,7 +1,6 @@
 package com.winthier.hostile;
 
 import com.winthier.custom.CustomPlugin;
-import com.winthier.custom.entity.EntityWatcher;
 import com.winthier.custom.event.CustomRegisterEvent;
 import com.winthier.custom.event.CustomTickEvent;
 import java.util.ArrayList;
@@ -25,6 +24,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.map.MapCursor;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -72,7 +72,13 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         if (cmd == null) {
             return false;
         } else if (cmd.equals("test")) {
-            sender.sendMessage("test");
+            VanillaMob vanillaMob = VanillaMob.valueOf(args[1].toUpperCase());
+            Entity entity = vanillaMob.spawn(player.getLocation());
+            if (entity == null) {
+                player.sendMessage("Failed to spawn " + vanillaMob + "!");
+            } else {
+                player.sendMessage(vanillaMob + " spawned (" + entity.getType() + ")");
+            }
         } else {
             return false;
         }
@@ -114,9 +120,25 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
         if (!isKillWorld(event.getEntity().getWorld())) return;
-        if (random.nextInt(10) > 0) return;
+        long time = event.getEntity().getWorld().getTime();
+        if (time < 13000 || time > 23000) return;
         if (!(event.getEntity() instanceof Monster)) return;
         if (event.getEntity().getKiller() == null) return;
+        if (event.getEntity().getLocation().getBlock().getLightFromSky() == 0) return;
+        int chance = 0;
+        Player player = event.getEntity().getKiller();
+        for (ItemStack item: player.getEquipment().getArmorContents()) {
+            if (item == null) continue;
+            switch (item.getType()) {
+            case DIAMOND_HELMET:
+            case DIAMOND_CHESTPLATE:
+            case DIAMOND_LEGGINGS:
+            case DIAMOND_BOOTS:
+                chance += 1;
+            default: break;
+            }
+        }
+        if (random.nextInt(40) >= chance) return;
         Block block = event.getEntity().getKiller().getLocation().getBlock();
         if (!isKillWorld(block.getWorld())) return;
         tryToSpawnHive(block, 0);
@@ -132,7 +154,9 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
 
     void on10Ticks() {
         for (Player player: getServer().getOnlinePlayers()) {
-            if (!isKillWorld(player.getWorld())) {
+            long time = player.getWorld().getTime();
+            if (!isKillWorld(player.getWorld())
+                || time < 13000 || time > 23000) {
                 player.removeMetadata("MiniMapCursors", this);
                 continue;
             }
@@ -161,24 +185,15 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
 
     boolean tryToSpawnHive(Block block, int level) {
         int rad = 32 + random.nextInt(64);
+        int dx, dz;
         if (random.nextBoolean()) {
-            block = block.getRelative(random.nextBoolean() ? rad : -rad,
-                                      random.nextInt(16) - random.nextInt(16),
-                                      random.nextInt(rad + rad) - rad);
+            dx = random.nextBoolean() ? rad : -rad;
+            dz = random.nextInt(rad + rad) - rad;
         } else {
-            block = block.getRelative(random.nextInt(rad + rad) - rad,
-                                      random.nextInt(16) - random.nextInt(16),
-                                      random.nextBoolean() ? rad : -rad);
+            dx = random.nextInt(rad + rad) - rad;
+            dz = random.nextBoolean() ? rad : -rad;
         }
-        if (block.getType().isSolid()) {
-            while (block.getType().isSolid()) block = block.getRelative(0, 1, 0);
-        } else {
-            do {
-                Block nextBlock = block.getRelative(0, -1, 0);
-                if (nextBlock.getType().isSolid()) break;
-                block = nextBlock;
-            } while (block.getY() > 0);
-        }
+        block = block.getWorld().getHighestBlockAt(block.getX() + dx, block.getZ() + dz);
         if (block.getY() < 1 || block.getY() > 127 || block.isLiquid()) return false;
         switch (block.getBiome()) {
         case MUSHROOM_ISLAND:
@@ -190,7 +205,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         if (block.getRelative(0, 1, 0).getType() == Material.AIR) {
             block = block.getRelative(0, 1, 0);
         }
-        for (Entity nearby: block.getWorld().getNearbyEntities(block.getLocation().add(0.5, 0.0, 0.5), 8, 8, 8)) {
+        for (Entity nearby: block.getWorld().getNearbyEntities(block.getLocation().add(0.5, 0.5, 0.5), 8, 8, 8)) {
             if (nearby.getType() == EntityType.PLAYER) return false;
         }
         Loc newLoc = new Loc(block);
@@ -207,36 +222,28 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         return true;
     }
 
-    HostileMob.Type tryToSpawnMob(Block block, int level, int tries) {
+    int tryToSpawnMob(Block block, int level, int tries) {
         for (int i = 0; i < tries; i += 1) {
-            HostileMob.Type type = tryToSpawnMob(block, level);
-            if (type != null) return type;
+            int weight = tryToSpawnMob(block, level);
+            if (weight > 0) return weight;
         }
-        return null;
+        return 0;
     }
 
-    HostileMob.Type tryToSpawnMob(Block block, int level) {
-        int rad = 10 + random.nextInt(8);
+    int tryToSpawnMob(Block block, int level) {
+        int rad = 8 + random.nextInt(5);
+        int dx, dz;
         if (random.nextBoolean()) {
-            block = block.getRelative(random.nextBoolean() ? rad : -rad,
-                                      random.nextInt(rad) - random.nextInt(rad),
-                                      random.nextInt(rad + rad) - rad);
+            dx = random.nextBoolean() ? rad : -rad;
+            dz = random.nextInt(rad + rad) - rad;
         } else {
-            block = block.getRelative(random.nextInt(rad + rad) - rad,
-                                      random.nextInt(rad) - random.nextInt(rad),
-                                      random.nextBoolean() ? rad : -rad);
+            dx = random.nextInt(rad + rad) - rad;
+            dz = random.nextBoolean() ? rad : -rad;
         }
-        if (block.getType().isSolid()) {
-            while (block.getType().isSolid()) block = block.getRelative(0, 1, 0);
-        } else {
-            do {
-                Block nextBlock = block.getRelative(0, -1, 0);
-                if (nextBlock.getType().isSolid()) break;
-                block = nextBlock;
-            } while (block.getY() > 0);
-        }
-        if (block.getY() < 1 || block.getY() > 127 || block.isLiquid()) return null;
-        ArrayList<HostileMob.Type> types = new ArrayList<>();
+        block = block.getWorld().getHighestBlockAt(block.getX() + dx, block.getZ() + dz);
+        Block below = block.getRelative(0, -1, 0);
+        if (block.getY() < 1 || block.getY() > 127 || below.isLiquid()) return 0;
+        ArrayList<Enum> types = new ArrayList<>();
         for (HostileMob.Type type: HostileMob.Type.values()) {
             if (level < type.minLevel) continue;
             switch (type) {
@@ -252,11 +259,30 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             }
             for (int i = 0; i < type.chance; i += 1) types.add(type);
         }
-        if (types.size() == 0) return null;
-        HostileMob.Type type = types.get(random.nextInt(types.size()));
+        for (VanillaMob type: VanillaMob.values()) {
+            if (level < type.minLevel) continue;
+            switch (type.entityType) {
+            case SPIDER:
+                if (block.getLightLevel() > 7) continue;
+                break;
+            default: break;
+            }
+            for (int i = 0; i < type.chance; i += 1) types.add(type);
+        }
+        if (types.size() == 0) return 0;
+        Enum type = types.get(random.nextInt(types.size()));
         Location location = block.getLocation().add(0.5, 0.0, 0.5);
-        EntityWatcher watcher = CustomPlugin.getInstance().getEntityManager().spawnEntity(location, type.customId);
-        return type;
+        if (type instanceof HostileMob.Type) {
+            HostileMob.Type htype = (HostileMob.Type)type;
+            CustomPlugin.getInstance().getEntityManager().spawnEntity(location, htype.customId);
+            return htype.weight;
+        } else if (type instanceof VanillaMob) {
+            VanillaMob vtype = (VanillaMob)type;
+            vtype.spawn(location);
+            return vtype.weight;
+        } else {
+            return 0;
+        }
     }
 
     public boolean isKillWorld(World world) {

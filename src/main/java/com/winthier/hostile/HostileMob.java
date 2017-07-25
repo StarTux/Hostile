@@ -14,24 +14,24 @@ import org.bukkit.inventory.ItemStack;
 public interface HostileMob extends CustomEntity {
     enum Type {
         // Class, Chance, MinLevel, Weight
-        FART_GOBLIN(FartGoblinEntity.class, 10, 0, 1),
-        FATZO(FatzoEntity.class, 10, 0, 1),
-        SKELLINGTON(SkellingtonEntity.class, 20, 0, 1),
-        QUEEN_SPIDER(QueenSpiderEntity.class, 5, 5, 2),
-        ANGRY_PARROT(AngryParrotEntity.class, 5, 0, 1),
-        BATTER_BAT(BatterBatEntity.class, 5, 15, 2),
-        PETARD(PetardEntity.class, 5, 15, 2);
+        SKELLINGTON (SkellingtonEntity.class, 10, 10, 4),
+        FART_GOBLIN ( FartGoblinEntity.class, 20,  5, 4),
+        FATZO       (      FatzoEntity.class, 20,  5, 4),
+        ANGRY_PARROT(AngryParrotEntity.class, 30,  2, 4),
+        QUEEN_SPIDER(QueenSpiderEntity.class, 40,  2, 8),
+        BATTER_BAT  (  BatterBatEntity.class, 50,  2, 8),
+        PETARD      (     PetardEntity.class, 50,  2, 8);
 
         public final Class<? extends CustomEntity> clazz;
-        public final int chance;
         public final int minLevel;
+        public final int chance;
         public final int weight;
         public final String customId;
 
-        Type(Class<? extends CustomEntity> clazz, int chance, int minLevel, int weight) {
+        Type(Class<? extends CustomEntity> clazz, int minLevel, int chance, int weight) {
             this.clazz = clazz;
-            this.chance = chance;
             this.minLevel = minLevel;
+            this.chance = chance;
             this.weight = weight;
             this.customId = "hostile:" + name().toLowerCase();
         }
