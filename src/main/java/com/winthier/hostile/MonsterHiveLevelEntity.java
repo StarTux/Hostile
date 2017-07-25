@@ -9,6 +9,7 @@ import com.winthier.custom.entity.TickableEntity;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -91,7 +92,7 @@ public final class MonsterHiveLevelEntity implements CustomEntity, TickableEntit
                 return;
             }
             int level = ((MonsterHiveBlock.Watcher)watcher).getLevel();
-            entity.setCustomName("" + level);
+            entity.setCustomName("" + ChatColor.GOLD + ChatColor.BOLD + level);
             entity.setCustomNameVisible(true);
         }
     }

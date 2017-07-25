@@ -127,34 +127,30 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                 if (playersNearby > 0) {
                     CreatureSpawner creatureSpawner = (CreatureSpawner)block.getState();
                     if (creatureSpawner != null) creatureSpawner.setDelay(999);
-                    if (armorCooldown > 0) {
-                        armorCooldown -= TICKS;
-                    } else {
-                        if (level >= 10) {
-                            int dx = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
-                            int dy = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
-                            int dz = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
-                            if (dx != 0 || dy != 0 || dz != 0) {
-                                Block armor = block.getRelative(dx, dy, dz);
-                                int dist = Math.max(Math.abs(dx), Math.max(Math.abs(dy), Math.abs(dz)));
-                                Material mat;
-                                if (dist < 2) {
-                                    mat = Material.WEB;
-                                } else if (dist == 2) {
-                                    if (level >= 100) {
-                                        mat = Material.OBSIDIAN;
-                                    } else if (level >= 50) {
-                                        mat = Material.ENDER_STONE;
-                                    } else {
-                                        mat = Material.STAINED_GLASS;
-                                    }
+                    if (level >= 10) {
+                        int dx = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
+                        int dy = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
+                        int dz = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
+                        if (dx != 0 || dy != 0 || dz != 0) {
+                            Block armor = block.getRelative(dx, dy, dz);
+                            int dist = Math.max(Math.abs(dx), Math.max(Math.abs(dy), Math.abs(dz)));
+                            Material mat;
+                            if (dist < 2) {
+                                mat = Material.WEB;
+                            } else if (dist == 2) {
+                                if (level >= 100) {
+                                    mat = Material.OBSIDIAN;
+                                } else if (level >= 50) {
+                                    mat = Material.ENDER_STONE;
                                 } else {
-                                    mat = null;
+                                    mat = Material.STAINED_GLASS;
                                 }
-                                if (mat != null && armor.getType() != mat) {
-                                    armor.setType(mat);
-                                    armorCooldown = 100;
-                                }
+                            } else {
+                                mat = null;
+                            }
+                            if (mat != null && armor.getType() != mat) {
+                                armor.setType(mat);
+                                armorCooldown = 100;
                             }
                         }
                     }
@@ -166,13 +162,26 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                             double cz = plugin.getRandom().nextDouble() - 0.5;
                             Vector vec = new Vector(cx, cy, cz).normalize().multiply(cs);
                             Block dome = block.getRelative(vec.getBlockX(), vec.getBlockY(), vec.getBlockZ());
-                            if (!dome.getType().isSolid()) {
+                            if (!dome.getType().isSolid() || dome.getType().isTransparent()) {
                                 dome.setType(Material.STAINED_GLASS);
-                                armorCooldown = 100;
+                                dome.setData((byte)10);
+                            }
+                            Block replace = block.getRelative(vec.getBlockX(), plugin.getRandom().nextInt(16) - 8, vec.getBlockY());
+                            switch (replace.getType()) {
+                            case WATER: case STATIONARY_WATER:
+                                replace.setType(Material.ICE);
+                                break;
+                            case SAND: case DIRT: case GRASS: case GRASS_PATH: case GRAVEL: case MAGMA:
+                                replace.setType(Material.SOUL_SAND);
+                                break;
+                            case STONE: case SANDSTONE: case RED_SANDSTONE:
+                                replace.setType(Material.NETHERRACK);
+                                break;
+                            default: break;
                             }
                         }
                     }
-                    if (hostilesNearby <= level && spawnCount <= 4 + level / 10) {
+                    if (hostilesNearby <= level && spawnCount <= 5 * (level / 10 + 1)) {
                         if (spawnCooldown > 0) {
                             spawnCooldown -= TICKS;
                         } else {
