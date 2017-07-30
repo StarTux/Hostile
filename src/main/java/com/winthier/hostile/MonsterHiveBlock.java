@@ -8,6 +8,7 @@ import com.winthier.custom.block.TickableBlock;
 import com.winthier.custom.entity.CustomEntity;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -25,14 +26,16 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.entity.SpawnerSpawnEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 
 @RequiredArgsConstructor
 public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
     public static final String CUSTOM_ID = "hostile:monster_hive";
     private final HostilePlugin plugin;
-    private static final int TICKS = 5;
+    private final Random random = new Random(System.currentTimeMillis());
 
     @Override
     public String getCustomId() {
@@ -81,38 +84,44 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
         }
     }
 
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event, BlockContext context) {
+        if (event.getPlayer().isOp()) {
+            ((Watcher)context.getBlockWatcher()).level += 1;
+        }
+    }
+
     @Getter @RequiredArgsConstructor
     public final class Watcher implements BlockWatcher {
         private final Block block;
         private final MonsterHiveBlock customBlock;
+        private int ticks = 0;
         private int ticksLived = 0;
         private int spawnCount = 0;
         @Setter private int level = 1;
         private int spawnCooldown = 0;
-        private int armorCooldown = 0;
+        private int playersNearby = 0;
+        private int hostilesNearby = 0;
+        private int cooldownShell = 1;
+        private int cooldownSoil = 1;
+        private int cooldownFort = 1;
 
         void onTick() {
             if (!plugin.isKillWorld(block.getWorld())) return;
+            // Register
             if (plugin.getHiveTicks() == 0) {
                 plugin.registerHive(block, level);
             }
+            // Check identity
             if (block.getType() != Material.MOB_SPAWNER) {
                 CustomPlugin.getInstance().getBlockManager().removeBlockWatcher(this);
                 plugin.unregisterHive(block);
                 return;
             }
-            long time = block.getWorld().getTime();
-            if (time < 13000 || time > 23000) return;
-            ticksLived += 1;
-            if (ticksLived > 20 * 10 * (level / 10 + 1)) {
-                level += 1;
-                ticksLived = 0;
-                spawnCount = 0;
-                save();
-            }
-            if (ticksLived % TICKS == 0) {
-                int playersNearby = 0;
-                int hostilesNearby = 0;
+            // Count hostiles and players nearby once per second
+            if (ticks++ % 20 == 0) {
+                playersNearby = 0;
+                hostilesNearby = 0;
                 final double radius = 32.0;
                 for (Entity nearby: block.getWorld().getNearbyEntities(block.getLocation().add(0.5, 0.5, 0.5), radius, radius, radius)) {
                     if (nearby instanceof Player) {
@@ -121,83 +130,133 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                         playersNearby += 1;
                     } else {
                         CustomEntity e = CustomPlugin.getInstance().getEntityManager().getCustomEntity(nearby);
-                        if (e != null && e instanceof HostileMob) hostilesNearby += ((HostileMob)e).getHostileType().weight;
+                        if (e != null && e instanceof HostileMob) {
+                            hostilesNearby += ((HostileMob)e).getHostileType().weight;
+                        }
                     }
                 }
-                if (playersNearby > 0) {
-                    CreatureSpawner creatureSpawner = (CreatureSpawner)block.getState();
-                    if (creatureSpawner != null) creatureSpawner.setDelay(999);
-                    if (level >= 10) {
-                        int dx = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
-                        int dy = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
-                        int dz = plugin.getRandom().nextInt(3) - plugin.getRandom().nextInt(3);
-                        if (dx != 0 || dy != 0 || dz != 0) {
-                            Block armor = block.getRelative(dx, dy, dz);
-                            int dist = Math.max(Math.abs(dx), Math.max(Math.abs(dy), Math.abs(dz)));
-                            Material mat;
-                            if (dist < 2) {
-                                mat = Material.WEB;
-                            } else if (dist == 2) {
-                                if (level >= 100) {
-                                    mat = Material.OBSIDIAN;
-                                } else if (level >= 50) {
-                                    mat = Material.ENDER_STONE;
-                                } else {
-                                    mat = Material.STAINED_GLASS;
-                                }
-                            } else {
-                                mat = null;
-                            }
-                            if (mat != null && armor.getType() != mat) {
-                                armor.setType(mat);
-                                armorCooldown = 100;
-                            }
-                        }
-                    }
-                    if (level >= 50) {
-                        for (int i = 0; i < 100 / TICKS; i += 1) {
-                            double cs = 16;
-                            double cx = plugin.getRandom().nextDouble() - 0.5;
-                            double cy = plugin.getRandom().nextDouble() - 0.5;
-                            double cz = plugin.getRandom().nextDouble() - 0.5;
-                            Vector vec = new Vector(cx, cy, cz).normalize().multiply(cs);
-                            Block dome = block.getRelative(vec.getBlockX(), vec.getBlockY(), vec.getBlockZ());
-                            if (!dome.getType().isSolid() || dome.getType().isTransparent()) {
-                                dome.setType(Material.STAINED_GLASS);
-                                dome.setData((byte)10);
-                            }
-                            Block replace = block.getRelative(vec.getBlockX(), plugin.getRandom().nextInt(16) - 8, vec.getBlockY());
-                            switch (replace.getType()) {
-                            case WATER: case STATIONARY_WATER:
-                                replace.setType(Material.ICE);
-                                break;
-                            case SAND: case DIRT: case GRASS: case GRASS_PATH: case GRAVEL: case MAGMA:
-                                replace.setType(Material.SOUL_SAND);
-                                break;
-                            case STONE: case SANDSTONE: case RED_SANDSTONE:
-                                replace.setType(Material.NETHERRACK);
-                                break;
-                            default: break;
-                            }
-                        }
-                    }
-                    if (hostilesNearby <= level && spawnCount <= 5 * (level / 10 + 1)) {
-                        if (spawnCooldown > 0) {
-                            spawnCooldown -= TICKS;
-                        } else {
-                            int weight = plugin.tryToSpawnMob(block, level, 16);
-                            if (weight > 0) {
-                                spawnCount += weight;
-                                spawnCooldown = 40;
-                            }
-                        }
-                    }
-                    Location levelLoc = block.getLocation().add(0.5, 1.5, 0.5);
-                    for (Entity nearby: block.getWorld().getNearbyEntities(levelLoc, 1, 1, 1)) {
-                        if (CustomPlugin.getInstance().getEntityManager().getEntityWatcher(nearby) instanceof MonsterHiveLevelEntity.Watcher) return;
-                    }
-                    CustomPlugin.getInstance().getEntityManager().spawnEntity(levelLoc, MonsterHiveLevelEntity.CUSTOM_ID);
+                // Spawn level billboard if necessary
+                Location levelLoc = block.getLocation().add(0.5, 1.5, 0.5);
+                for (Entity nearby: block.getWorld().getNearbyEntities(levelLoc, 1, 1, 1)) {
+                    if (CustomPlugin.getInstance().getEntityManager().getEntityWatcher(nearby) instanceof MonsterHiveLevelEntity.Watcher) return;
                 }
+                CustomPlugin.getInstance().getEntityManager().spawnEntity(levelLoc, MonsterHiveLevelEntity.CUSTOM_ID);
+            }
+            if (playersNearby == 0) return;
+            // Update ticks and level
+            ticksLived += 1;
+            if (ticksLived > (20 * 30) + 200 * (level / 10 + 1)) {
+                level += 1;
+                ticksLived = 0;
+                spawnCount = 0;
+                save();
+                if (level == 50 || level == 100) {
+                    block.getWorld().spawnEntity(block.getLocation().add(10.0, 0.5, 10.0), EntityType.WITHER);
+                }
+            }
+            try {
+                CreatureSpawner creatureSpawner = (CreatureSpawner)block.getState();
+                if (creatureSpawner != null) creatureSpawner.setDelay(999);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            // Spawn mobs
+            int mobsToSpawn = 5 + 5 * (level / 10 + 1);
+            if (hostilesNearby <= mobsToSpawn && spawnCount <= mobsToSpawn) {
+                if (spawnCooldown > 0) {
+                    spawnCooldown -= 1;
+                } else {
+                    int weight = plugin.tryToSpawnMob(block, level, 16);
+                    if (weight > 0) {
+                        spawnCount += weight;
+                        spawnCooldown = 20;
+                    }
+                }
+            }
+            // Build fortifications
+            double cx = random.nextDouble() - 0.5;
+            double cy = random.nextDouble() - 0.5;
+            double cz = random.nextDouble() - 0.5;
+            if (cooldownShell > 0) {
+                if (level >= 10) cooldownShell -= 1;
+            } else {
+                Material matShell;
+                if (level >= 40) {
+                    matShell = Material.OBSIDIAN;
+                } else if (level >= 30) {
+                    matShell = Material.NETHER_BRICK;
+                } else if (level >= 20) {
+                    matShell = Material.NETHERRACK;
+                } else {
+                    matShell = Material.STAINED_GLASS;
+                }
+                Vector vecShell = new Vector(cx, cy, cz).normalize();
+                BlockIterator iterShell = new BlockIterator(block.getWorld(), new Vector(block.getX(), block.getY(), block.getZ()), vecShell, 0.0, 10);
+                while (iterShell.hasNext()) {
+                    Block blockShell = iterShell.next();
+                    if (blockShell.equals(block)) continue;
+                    int dx = block.getX() - blockShell.getX();
+                    int dy = block.getY() - blockShell.getY();
+                    int dz = block.getZ() - blockShell.getZ();
+                    if (dx * dx + dy * dy + dz * dz > 9) break;
+                    if (blockShell.getType() == matShell) continue;
+                    blockShell.setType(matShell);
+                    if (matShell == Material.STAINED_GLASS) blockShell.setData((byte)15);
+                    cooldownShell = 20;
+                    break;
+                }
+            }
+            if (cooldownSoil > 0) {
+                if (level >= 20) cooldownSoil -= 1;
+            } else {
+                Vector vecSoil = new Vector(cx, 0.0, cz).normalize().multiply(random.nextDouble() * 20.0);
+                Block blockSoil = block.getWorld().getHighestBlockAt(block.getX() + vecSoil.getBlockX(), block.getZ() + vecSoil.getBlockZ()).getRelative(0, -1, 0);
+                switch (blockSoil.getType()) {
+                case AIR: break;
+                case DIRT:
+                case GRASS:
+                case GRASS_PATH:
+                case SAND:
+                case STONE:
+                    blockSoil.setType(Material.NETHERRACK);
+                    cooldownSoil = 20;
+                    break;
+                case LEAVES:
+                case LEAVES_2:
+                    blockSoil.setType(Material.FIRE);
+                    cooldownSoil = 20;
+                    break;
+                case WATER:
+                case STATIONARY_WATER:
+                    if (blockSoil.getData() == 0) {
+                        blockSoil.setType(Material.ICE);
+                        cooldownSoil = 5;
+                    }
+                    break;
+                case LAVA:
+                case STATIONARY_LAVA:
+                    blockSoil.setType(Material.OBSIDIAN);
+                    cooldownSoil = 5;
+                    break;
+                default: break;
+                }
+            }
+            if (cooldownFort > 0) {
+                if (level >= 30) cooldownFort -= 1;
+            } else {
+                double extFort = random.nextDouble() * 4.0;
+                Vector vecFort = new Vector(cx, 0.0, cz).normalize().multiply(16.0 + extFort);
+                Block blockFort = block.getWorld().getHighestBlockAt(block.getX() + vecFort.getBlockX(), block.getZ() + vecFort.getBlockZ());
+                if (blockFort.getY() < block.getY() + (int)extFort) {
+                    Material mat;
+                    if (random.nextBoolean()) {
+                        mat = Material.NETHER_BRICK;
+                    } else {
+                        mat = Material.RED_NETHER_BRICK;
+                    }
+                    block.getWorld().spawnFallingBlock(blockFort.getLocation().add(0.5, 128.0, 0.5), mat.getNewData((byte)0)).setDropItem(false);
+                }
+                cooldownFort = 5;
             }
         }
 

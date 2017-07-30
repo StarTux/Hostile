@@ -14,13 +14,13 @@ import org.bukkit.inventory.ItemStack;
 public interface HostileMob extends CustomEntity {
     enum Type {
         // Class, Chance, MinLevel, Weight
-        SKELLINGTON (SkellingtonEntity.class, 10, 10, 4),
-        FART_GOBLIN ( FartGoblinEntity.class, 20, 10, 4),
-        FATZO       (      FatzoEntity.class, 20, 10, 4),
-        ANGRY_PARROT(AngryParrotEntity.class, 30, 10, 4),
-        QUEEN_SPIDER(QueenSpiderEntity.class, 40,  5, 8),
-        BATTER_BAT  (  BatterBatEntity.class, 50,  5, 8),
-        PETARD      (     PetardEntity.class, 50,  5, 8);
+        SKELLINGTON (SkellingtonEntity.class, 10, 10, 3),
+        FART_GOBLIN ( FartGoblinEntity.class, 20, 10, 3),
+        FATZO       (      FatzoEntity.class, 20, 10, 3),
+        ANGRY_PARROT(AngryParrotEntity.class, 30, 10, 3),
+        QUEEN_SPIDER(QueenSpiderEntity.class, 40,  5, 6),
+        BATTER_BAT  (  BatterBatEntity.class, 50,  5, 6),
+        PETARD      (     PetardEntity.class, 50,  5, 6);
 
         public final Class<? extends CustomEntity> clazz;
         public final int minLevel;

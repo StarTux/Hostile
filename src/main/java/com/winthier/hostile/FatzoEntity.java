@@ -17,7 +17,7 @@ public final class FatzoEntity implements CustomEntity, HostileMob {
     private final HostilePlugin plugin;
     private final Type hostileType = Type.FATZO;
     private final String customId = hostileType.customId;
-    private static final double HEALTH = 50;
+    private static final double HEALTH = 100;
     private static final double SPEED = 0.2;
 
     @Override

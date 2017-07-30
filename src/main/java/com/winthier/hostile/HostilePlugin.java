@@ -4,7 +4,6 @@ import com.winthier.custom.CustomPlugin;
 import com.winthier.custom.event.CustomRegisterEvent;
 import com.winthier.custom.event.CustomTickEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,7 +137,8 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             default: break;
             }
         }
-        if (random.nextInt(40) >= chance) return;
+        if (chance == 0) return;
+        if (random.nextInt(100) >= chance) return;
         Block block = event.getEntity().getKiller().getLocation().getBlock();
         if (!isKillWorld(block.getWorld())) return;
         tryToSpawnHive(block, 0);
@@ -154,9 +154,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
 
     void on10Ticks() {
         for (Player player: getServer().getOnlinePlayers()) {
-            long time = player.getWorld().getTime();
-            if (!isKillWorld(player.getWorld())
-                || time < 13000 || time > 23000) {
+            if (!isKillWorld(player.getWorld())) {
                 player.removeMetadata("MiniMapCursors", this);
                 continue;
             }
@@ -202,8 +200,10 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         default:
             break;
         }
-        if (block.getRelative(0, 1, 0).getType() == Material.AIR) {
-            block = block.getRelative(0, 1, 0);
+        for (int i = 0; i < 3; i += 1) {
+            if (block.getRelative(0, 1, 0).getType() == Material.AIR) {
+                block = block.getRelative(0, 1, 0);
+            }
         }
         for (Entity nearby: block.getWorld().getNearbyEntities(block.getLocation().add(0.5, 0.5, 0.5), 8, 8, 8)) {
             if (nearby.getType() == EntityType.PLAYER) return false;

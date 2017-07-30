@@ -22,7 +22,7 @@ public final class SkellingtonEntity implements CustomEntity, HostileMob, Tickab
     private final HostilePlugin plugin;
     private final Type hostileType = Type.SKELLINGTON;
     private final String customId = hostileType.customId;
-    private static final double HEALTH = 50;
+    private static final double HEALTH = 100;
 
     @Override
     public Entity spawnEntity(Location location) {
