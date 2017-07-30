@@ -18,9 +18,9 @@ public interface HostileMob extends CustomEntity {
         FART_GOBLIN ( FartGoblinEntity.class, 20, 10, 3),
         FATZO       (      FatzoEntity.class, 20, 10, 3),
         ANGRY_PARROT(AngryParrotEntity.class, 30, 10, 3),
-        QUEEN_SPIDER(QueenSpiderEntity.class, 40,  5, 6),
-        BATTER_BAT  (  BatterBatEntity.class, 50,  5, 6),
-        PETARD      (     PetardEntity.class, 50,  5, 6);
+        QUEEN_SPIDER(QueenSpiderEntity.class, 40,  5, 4),
+        BATTER_BAT  (  BatterBatEntity.class, 50,  5, 4),
+        PETARD      (     PetardEntity.class, 50,  5, 4);
 
         public final Class<? extends CustomEntity> clazz;
         public final int minLevel;

@@ -161,8 +161,8 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                 e.printStackTrace();
             }
             // Spawn mobs
-            int mobsToSpawn = 5 + 5 * (level / 10 + 1);
-            if (hostilesNearby <= mobsToSpawn && spawnCount <= mobsToSpawn) {
+            int mobsToSpawn = 10 + 6 * (level / 10 + 1);
+            if (spawnCount <= mobsToSpawn) {
                 if (spawnCooldown > 0) {
                     spawnCooldown -= 1;
                 } else {
@@ -209,36 +209,48 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
             if (cooldownSoil > 0) {
                 if (level >= 20) cooldownSoil -= 1;
             } else {
-                Vector vecSoil = new Vector(cx, 0.0, cz).normalize().multiply(random.nextDouble() * 20.0);
+                Vector vecSoil = new Vector(cx, 0.0, cz).normalize().multiply(random.nextDouble() * 28.0);
                 Block blockSoil = block.getWorld().getHighestBlockAt(block.getX() + vecSoil.getBlockX(), block.getZ() + vecSoil.getBlockZ()).getRelative(0, -1, 0);
-                switch (blockSoil.getType()) {
-                case AIR: break;
-                case DIRT:
-                case GRASS:
-                case GRASS_PATH:
-                case SAND:
-                case STONE:
-                    blockSoil.setType(Material.NETHERRACK);
-                    cooldownSoil = 20;
-                    break;
-                case LEAVES:
-                case LEAVES_2:
-                    blockSoil.setType(Material.FIRE);
-                    cooldownSoil = 20;
-                    break;
-                case WATER:
-                case STATIONARY_WATER:
-                    if (blockSoil.getData() == 0) {
-                        blockSoil.setType(Material.ICE);
-                        cooldownSoil = 5;
+                if (blockSoil.getY() < block.getY() - 4) {
+                    Material mat;
+                    switch (random.nextInt(7)) {
+                    case 0: mat = Material.NETHER_BRICK; break;
+                    case 1: mat = Material.RED_NETHER_BRICK; break;
+                    case 3: case 4: mat = Material.ENDER_STONE; break;
+                    case 5: case 6: default: mat = Material.OBSIDIAN;
                     }
-                    break;
-                case LAVA:
-                case STATIONARY_LAVA:
-                    blockSoil.setType(Material.OBSIDIAN);
-                    cooldownSoil = 5;
-                    break;
-                default: break;
+                    block.getWorld().spawnFallingBlock(blockSoil.getLocation().add(0.5, 128.0, 0.5), mat.getNewData((byte)0)).setDropItem(false);
+                } else {
+                    switch (blockSoil.getType()) {
+                    case AIR: break;
+                    case DIRT:
+                    case GRASS:
+                    case GRASS_PATH:
+                    case SAND:
+                    case STONE:
+                        blockSoil.setType(Material.NETHERRACK);
+                        cooldownSoil = 10;
+                        break;
+                    case LEAVES:
+                    case LEAVES_2:
+                        blockSoil.setType(Material.FIRE);
+                        cooldownSoil = 10;
+                        break;
+                    case WATER:
+                    case STATIONARY_WATER:
+                        if (blockSoil.getData() == 0) {
+                            blockSoil.setType(Material.ICE);
+                            cooldownSoil = 3;
+                        }
+                        break;
+                    case LAVA:
+                    case STATIONARY_LAVA:
+                        blockSoil.setType(Material.OBSIDIAN);
+                        cooldownSoil = 3;
+                        break;
+                    default:
+                        cooldownSoil = 20;
+                    }
                 }
             }
             if (cooldownFort > 0) {
@@ -256,7 +268,7 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                     }
                     block.getWorld().spawnFallingBlock(blockFort.getLocation().add(0.5, 128.0, 0.5), mat.getNewData((byte)0)).setDropItem(false);
                 }
-                cooldownFort = 5;
+                cooldownFort = 2;
             }
         }
 
