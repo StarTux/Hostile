@@ -6,17 +6,26 @@ import com.winthier.custom.block.BlockWatcher;
 import com.winthier.custom.block.CustomBlock;
 import com.winthier.custom.block.TickableBlock;
 import com.winthier.custom.entity.CustomEntity;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarFlag;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Monster;
@@ -64,6 +73,16 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
         ((Watcher)watcher).load();
     }
 
+    @Override
+    public void blockWasRemoved(BlockWatcher watcher) {
+        ((Watcher)watcher).onRemove();
+    }
+
+    @Override
+    public void blockWillUnload(BlockWatcher watcher) {
+        ((Watcher)watcher).onRemove();
+    }
+
     @EventHandler
     public void onSpawnerSpawn(SpawnerSpawnEvent event, BlockContext context) {
         event.getSpawner().setDelay(999);
@@ -95,39 +114,63 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
     public final class Watcher implements BlockWatcher {
         private final Block block;
         private final MonsterHiveBlock customBlock;
+        private BossBar bossbar;
         private int ticks = 0;
+
+        // Saved state
         private int ticksLived = 0;
-        private int spawnCount = 0;
-        @Setter private int level = 1;
-        private int spawnCooldown = 0;
+        private int level = 1;
+        private int levelTicks = 0;
+        private boolean levelDefeated;
+        private int mobCount = 0;
+
+        // Statistics
         private int playersNearby = 0;
         private int hostilesNearby = 0;
+
+        // Cooldowns
         private int cooldownShell = 1;
         private int cooldownSoil = 1;
         private int cooldownFort = 1;
+
+        private final Map<UUID, MobType> mobs = new HashMap<>();
+        private final List<MobType> spawnMobs = new ArrayList<>();
 
         void onTick() {
             if (!plugin.isKillWorld(block.getWorld())) return;
             // Register
             if (plugin.getHiveTicks() == 0) {
-                plugin.registerHive(block, level);
+                plugin.registerHive(this);
             }
             // Check identity
-            if (block.getType() != Material.MOB_SPAWNER) {
+            if (block.getType() != Material.MOB_SPAWNER
+                && block.getType() != Material.BEDROCK) {
                 CustomPlugin.getInstance().getBlockManager().removeBlockWatcher(this);
-                plugin.unregisterHive(block);
+                plugin.unregisterHive(this);
                 return;
             }
             // Count hostiles and players nearby once per second
-            if (ticks++ % 20 == 0) {
+            if (ticks % 200 == 0 && block.getType() == Material.MOB_SPAWNER) {
+                try {
+                    CreatureSpawner creatureSpawner = (CreatureSpawner)block.getState();
+                    if (creatureSpawner != null) creatureSpawner.setDelay(999);
+                } catch (Exception e) {
+                    plugin.getLogger().warning(CUSTOM_ID + ": Block=" + block + ": Type=" + block.getType());
+                    e.printStackTrace();
+                }
+            }
+            List<Player> nearbyPlayers = new ArrayList<>();
+            if ((ticks++ % 10) == 0) {
                 playersNearby = 0;
                 hostilesNearby = 0;
                 final double radius = 32.0;
                 for (Entity nearby: block.getWorld().getNearbyEntities(block.getLocation().add(0.5, 0.5, 0.5), radius, radius, radius)) {
                     if (nearby instanceof Player) {
                         Player player = (Player)nearby;
-                        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) continue;
-                        playersNearby += 1;
+                        nearbyPlayers.add(player);
+                        if (player.getGameMode() != GameMode.CREATIVE && player.getGameMode() != GameMode.SPECTATOR) {
+                            playersNearby += 1;
+                        }
                     } else {
                         CustomEntity e = CustomPlugin.getInstance().getEntityManager().getCustomEntity(nearby);
                         if (e != null && e instanceof HostileMob) {
@@ -135,41 +178,106 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                         }
                     }
                 }
-                // Spawn level billboard if necessary
-                Location levelLoc = block.getLocation().add(0.5, 1.5, 0.5);
-                for (Entity nearby: block.getWorld().getNearbyEntities(levelLoc, 1, 1, 1)) {
-                    if (CustomPlugin.getInstance().getEntityManager().getEntityWatcher(nearby) instanceof MonsterHiveLevelEntity.Watcher) return;
+                if (bossbar != null) {
+                    if (playersNearby == 0) {
+                        bossbar.removeAll();
+                    } else {
+                        for (Player player: new ArrayList<Player>(bossbar.getPlayers())) {
+                            if (!nearbyPlayers.contains(player)) bossbar.removePlayer(player);
+                        }
+                        for (Player player: nearbyPlayers) bossbar.addPlayer(player);
+                    }
                 }
-                CustomPlugin.getInstance().getEntityManager().spawnEntity(levelLoc, MonsterHiveLevelEntity.CUSTOM_ID);
+                // Check spawned mobs
+                if (levelTicks > 0 && playersNearby > 0 && spawnMobs.isEmpty()) {
+                    if (mobs.isEmpty()) {
+                        levelDefeated = true;
+                    } else {
+                        for (Iterator<Map.Entry<UUID, MobType>> iter = mobs.entrySet().iterator(); iter.hasNext();) {
+                            Map.Entry<UUID, MobType> entry = iter.next();
+                            UUID uuid = entry.getKey();
+                            MobType type = entry.getValue();
+                            Entity e = plugin.getServer().getEntity(uuid);
+                            if (e == null) {
+                                iter.remove();
+                                spawnMobs.add(type);
+                            }
+                        }
+                    }
+                }
             }
             if (playersNearby == 0) return;
             // Update ticks and level
-            ticksLived += 1;
-            if (ticksLived > (20 * 30) + 200 * (level / 10 + 1)) {
+            if (levelDefeated) {
                 level += 1;
-                ticksLived = 0;
-                spawnCount = 0;
+                levelTicks = 0;
+                levelDefeated = false;
                 save();
-                if (level == 50 || level == 100) {
-                    block.getWorld().spawnEntity(block.getLocation().add(10.0, 0.5, 10.0), EntityType.WITHER);
-                }
-            }
-            try {
-                CreatureSpawner creatureSpawner = (CreatureSpawner)block.getState();
-                if (creatureSpawner != null) creatureSpawner.setDelay(999);
-            } catch (Exception e) {
-                e.printStackTrace();
             }
             // Spawn mobs
-            int mobsToSpawn = 10 + 6 * (level / 10 + 1);
-            if (spawnCount <= mobsToSpawn) {
-                if (spawnCooldown > 0) {
-                    spawnCooldown -= 1;
-                } else {
-                    int weight = plugin.tryToSpawnMob(block, level, 16);
-                    if (weight > 0) {
-                        spawnCount += weight;
-                        spawnCooldown = 20;
+            int currentLevelTicks = levelTicks;
+            levelTicks += 1;
+            if (currentLevelTicks == 0) {
+                if (bossbar != null) {
+                    bossbar.removeAll();
+                    bossbar.setVisible(false);
+                }
+                int innerLevel = (level - 1) % 10;
+                Map<MobType, Integer> newMobs = new HashMap<>();
+                if (innerLevel == 9 && level > 10) {
+                    if (level == 50 || level == 100) {
+                        spawnMobs.add(BossEntity.BossType.WITHER);
+                    } else {
+                        List<BossEntity.BossType> bossTypes = new ArrayList<>();
+                        for (BossEntity.BossType bossType: BossEntity.BossType.values()) {
+                            if (!bossType.rare) bossTypes.add(bossType);
+                        }
+                        spawnMobs.add(bossTypes.get(random.nextInt(bossTypes.size())));
+                    }
+                }
+                int totalChance = 0;
+                for (HostileMob.Type type: HostileMob.Type.values()) {
+                    if (level >= type.minLevel) {
+                        totalChance += type.chance;
+                        newMobs.put(type, type.chance);
+                    }
+                }
+                for (VanillaMob type: VanillaMob.values()) {
+                    if (level >= type.minLevel) {
+                        totalChance += type.chance;
+                        newMobs.put(type, type.chance);
+                    }
+                }
+                int totalMobs = 10 + (level / 10) * 10;
+                for (MobType type: newMobs.keySet()) {
+                    int chance = newMobs.get(type);
+                    int amount = Math.max(1, (totalMobs * chance) / totalChance);
+                    for (int i = 0; i < amount; i += 1) spawnMobs.add(type);
+                }
+                bossbar = plugin.getServer().createBossBar("Level " + level, BarColor.RED, BarStyle.SOLID);
+                bossbar.setVisible(true);
+                bossbar.setProgress(1.0);
+                mobCount = spawnMobs.size();
+            } else if (currentLevelTicks == 20) {
+                // Announce
+                String title = "";
+                String subtitle = "" + ChatColor.RED + "Level " + level;
+                for (Player player: block.getWorld().getPlayers()) {
+                    Block pb = player.getLocation().getBlock();
+                    if (Math.abs(pb.getX() - block.getX()) < 32
+                        && Math.abs(pb.getY() - block.getY()) < 32
+                        && Math.abs(pb.getZ() - block.getZ()) < 32) {
+                        player.sendTitle(title, subtitle, 10, 20, 10);
+                    }
+                }
+            } else if (currentLevelTicks > 100) {
+                if (!spawnMobs.isEmpty()) {
+                    MobType mobType = spawnMobs.get(spawnMobs.size() - 1);
+                    Entity e = plugin.tryToSpawnMob(block, mobType);
+                    if (e != null) {
+                        e.addScoreboardTag("ShowOnMiniMap");
+                        spawnMobs.remove(spawnMobs.size() - 1);
+                        mobs.put(e.getUniqueId(), mobType);
                     }
                 }
             }
@@ -276,23 +384,45 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
             Map<String, Object> map = (Map<String, Object>)CustomPlugin.getInstance().getBlockManager().loadBlockData(this);
             if (map == null) return;
             if (map.containsKey("level")) level = ((Number)map.get("level")).intValue();
-            if (map.containsKey("ticks_lived")) ticksLived = ((Number)map.get("ticks_lived")).intValue();
-            if (map.containsKey("spawn_count")) spawnCount = ((Number)map.get("spawn_count")).intValue();
-            plugin.registerHive(block, level);
+            plugin.registerHive(this);
         }
 
         void save() {
             Map<String, Object> map = new HashMap<>();
             map.put("level", level);
-            map.put("ticks_lived", ticksLived);
-            map.put("spawnCount", spawnCount);
             CustomPlugin.getInstance().getBlockManager().saveBlockData(this, map);
         }
 
         void onBreak() {
-            plugin.unregisterHive(block);
+            plugin.unregisterHive(this);
             int amount = Math.min(64, level / 10 + 1);
             block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), new ItemStack(Material.DIAMOND, amount));
+            CustomPlugin.getInstance().getBlockManager().removeBlockWatcher(this);
+            if (bossbar != null) {
+                bossbar.setVisible(false);
+                bossbar.removeAll();
+                bossbar = null;
+            }
+        }
+
+        void entityDidDie(Entity e) {
+            MobType type = mobs.remove(e.getUniqueId());
+            if (type != null) {
+                if (bossbar != null) {
+                    int totalMobs = spawnMobs.size() + mobs.size();
+                    double percentage = (double)totalMobs / (double)mobCount;
+                    bossbar.setProgress(percentage);
+                }
+            }
+        }
+
+        void onRemove() {
+            plugin.unregisterHive(this);
+            if (bossbar != null) {
+                bossbar.setVisible(false);
+                bossbar.removeAll();
+                bossbar = null;
+            }
         }
     }
 }

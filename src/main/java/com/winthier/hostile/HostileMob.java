@@ -12,7 +12,7 @@ import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.inventory.ItemStack;
 
 public interface HostileMob extends CustomEntity {
-    enum Type {
+    enum Type implements MobType {
         // Class, Chance, MinLevel, Weight
         SKELLINGTON (SkellingtonEntity.class, 10, 10, 3),
         FART_GOBLIN ( FartGoblinEntity.class, 20, 10, 3),
@@ -65,11 +65,6 @@ public interface HostileMob extends CustomEntity {
         if (!(event.getTarget() instanceof Player)) {
             event.setCancelled(true);
         }
-    }
-
-    @Override
-    default void entityWasSpawned(EntityWatcher watcher) {
-        watcher.getEntity().addScoreboardTag("ShowOnMiniMap");
     }
 
     @Override

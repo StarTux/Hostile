@@ -10,7 +10,7 @@ import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Spider;
 import org.bukkit.entity.Zombie;
 
-enum VanillaMob {
+enum VanillaMob implements MobType {
     CREEPER           (EntityType.CREEPER,          0, 10, 2),
     ZOMBIE            (EntityType.ZOMBIE,           0, 20, 1),
     ZOMBIE_VILLAGER   (EntityType.ZOMBIE_VILLAGER,  0, 20, 1),

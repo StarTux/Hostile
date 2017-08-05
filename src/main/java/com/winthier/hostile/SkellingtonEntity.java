@@ -67,7 +67,7 @@ public final class SkellingtonEntity implements CustomEntity, HostileMob, Tickab
     }
 
     @Getter @RequiredArgsConstructor
-    class Watcher implements EntityWatcher {
+    final class Watcher implements EntityWatcher {
         private final Skeleton entity;
         private final SkellingtonEntity customEntity;
         private int ticks;
