@@ -79,6 +79,8 @@ public final class BossEntity implements CustomEntity, TickableEntity {
             return location.getWorld().spawn(location, Wither.class, e -> {
                     e.setCustomName("" + ChatColor.RESET + ChatColor.DARK_RED + "Wither");
                     e.setCustomNameVisible(true);
+                    e.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(HEALTH);
+                    e.setHealth(HEALTH);
                     e.setRemoveWhenFarAway(true);
                 });
         case PIG_ZOMBIE:
@@ -153,6 +155,7 @@ public final class BossEntity implements CustomEntity, TickableEntity {
         private int ticks;
 
         void onTick() {
+            if (!plugin.isKillWorld(entity.getWorld())) return;
             int currentTicks = ticks;
             ticks += 1;
             double maxHealth = entity.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
