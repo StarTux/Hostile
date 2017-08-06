@@ -1,9 +1,11 @@
 package com.winthier.hostile;
 
 import com.winthier.custom.CustomPlugin;
+import com.winthier.custom.block.BlockWatcher;
 import com.winthier.custom.entity.EntityWatcher;
 import com.winthier.custom.event.CustomRegisterEvent;
 import com.winthier.custom.event.CustomTickEvent;
+import com.winthier.ore.DungeonRevealEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,14 +17,18 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.CreatureSpawner;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.map.MapCursor;
@@ -35,7 +41,6 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
     private final Random random = new Random(System.currentTimeMillis());
     private final Map<Loc, MonsterHiveBlock.Watcher> hives = new HashMap<>();
     private int hiveTicks = 0;
-    private int playerIndex = 0;
 
     @Value
     public final class Loc {
@@ -99,6 +104,8 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         }
         event.addBlock(new MonsterHiveBlock(this));
         event.addEntity(new MonsterHiveLevelEntity(this));
+        event.addBlock(new SpawnerBlock(this));
+        event.addItem(new SpawnerItem(this));
     }
 
     @EventHandler
@@ -275,5 +282,42 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
 
     public boolean isKillWorld(World world) {
         return killWorlds.contains(world.getName());
+    }
+
+    @EventHandler
+    public void onDungeonReveal(DungeonRevealEvent event) {
+        for (CreatureSpawner spawner: event.getSpawners()) {
+            SpawnerBlock.Watcher watcher = (SpawnerBlock.Watcher)CustomPlugin.getInstance().getBlockManager().wrapBlock(spawner.getBlock(), SpawnerBlock.CUSTOM_ID);
+            watcher.setPlayerPlaced(false);
+            watcher.setNatural(false);
+            watcher.save();
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onBlockBreak(BlockBreakEvent event) {
+        Block block = event.getBlock();
+        if (block.getType() != Material.MOB_SPAWNER) return;
+        ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
+        if (tool == null || !tool.containsEnchantment(Enchantment.SILK_TOUCH)) return;
+        BlockWatcher bw = CustomPlugin.getInstance().getBlockManager().getBlockWatcher(block);
+        if (bw != null) {
+            if (!(bw instanceof SpawnerBlock.Watcher)) return;
+            SpawnerBlock.Watcher watcher = (SpawnerBlock.Watcher)bw;
+            CustomPlugin.getInstance().getBlockManager().removeBlockWatcher(watcher);
+            if (!watcher.isPlayerPlaced() && random.nextInt(5) > 0) {
+                block.getWorld().createExplosion(block.getLocation().add(0.5, 0.5, 0.5), 4.0f);
+            } else {
+                ItemStack item = CustomPlugin.getInstance().getItemManager().spawnItemStack(SpawnerItem.CUSTOM_ID, 1);
+                SpawnerItem.setSpawnedType(item, ((CreatureSpawner)block.getState()).getSpawnedType());
+                SpawnerItem.setNatural(item, watcher.isNatural());
+                getServer().getScheduler().runTask(this, () -> block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), item));
+            }
+        } else {
+            ItemStack item = CustomPlugin.getInstance().getItemManager().spawnItemStack(SpawnerItem.CUSTOM_ID, 1);
+            SpawnerItem.setSpawnedType(item, ((CreatureSpawner)block.getState()).getSpawnedType());
+            SpawnerItem.setNatural(item, true);
+            getServer().getScheduler().runTask(this, () -> block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), item));
+        }
     }
 }
