@@ -55,8 +55,7 @@ enum VanillaMob implements MobType {
     WITHER_SKELETON   (EntityType.WITHER_SKELETON, 40, 20, 2),
     EVOKER            (EntityType.EVOKER,          40,  5, 3),
     VINDICATOR        (EntityType.EVOKER,          40, 10, 1),
-    BLAZE             (EntityType.BLAZE,           40, 10, 1),
-    ;
+    BLAZE             (EntityType.BLAZE,           40, 10, 1);
 
     public final EntityType entityType;
     public final int minLevel;

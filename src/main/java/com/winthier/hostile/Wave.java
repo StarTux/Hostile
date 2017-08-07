@@ -1,11 +1,10 @@
 package com.winthier.hostile;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 enum Wave {
-    VANILLA,
-    ;
+    VANILLA;
 
     Map<MobType, Integer> getMobTypes() {
         Map<MobType, Integer> result = new HashMap<>();

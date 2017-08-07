@@ -1,25 +1,20 @@
 package com.winthier.hostile;
 
 import com.winthier.custom.entity.CustomEntity;
-import com.winthier.custom.entity.EntityContext;
 import com.winthier.custom.entity.EntityWatcher;
 import com.winthier.custom.entity.TickableEntity;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.ChatColor;
-import org.bukkit.Color;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.SoundCategory;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.Blaze;
 import org.bukkit.entity.CaveSpider;
 import org.bukkit.entity.Creature;
-import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
@@ -29,9 +24,6 @@ import org.bukkit.entity.Witch;
 import org.bukkit.entity.Wither;
 import org.bukkit.entity.WitherSkeleton;
 import org.bukkit.entity.Zombie;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.entity.AreaEffectCloudApplyEvent;
-import org.bukkit.event.entity.ExplosionPrimeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -64,7 +56,7 @@ public final class BossEntity implements CustomEntity, TickableEntity {
     private final HostilePlugin plugin;
     private final BossType bossType;
     private final String customId;
-    private final double HEALTH = 1000.0;
+    private static final double HEALTH = 1000.0;
 
     BossEntity(HostilePlugin plugin, BossType bossType) {
         this.plugin = plugin;

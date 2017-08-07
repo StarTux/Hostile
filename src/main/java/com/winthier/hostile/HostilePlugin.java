@@ -253,7 +253,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             switch (htype) {
             case BATTER_BAT:
             case ANGRY_PARROT:
-                if (block.getLightFromSky() == 0) return null;;
+                if (block.getLightFromSky() == 0) return null;
                 break;
             case QUEEN_SPIDER:
                 if (block.getLightLevel() > 7) return null;
