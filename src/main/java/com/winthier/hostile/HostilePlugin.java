@@ -305,14 +305,10 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             if (!(bw instanceof SpawnerBlock.Watcher)) return;
             SpawnerBlock.Watcher watcher = (SpawnerBlock.Watcher)bw;
             CustomPlugin.getInstance().getBlockManager().removeBlockWatcher(watcher);
-            if (!watcher.isPlayerPlaced() && random.nextInt(5) > 0) {
-                block.getWorld().createExplosion(block.getLocation().add(0.5, 0.5, 0.5), 4.0f);
-            } else {
-                ItemStack item = CustomPlugin.getInstance().getItemManager().spawnItemStack(SpawnerItem.CUSTOM_ID, 1);
-                SpawnerItem.setSpawnedType(item, ((CreatureSpawner)block.getState()).getSpawnedType());
-                SpawnerItem.setNatural(item, watcher.isNatural());
-                getServer().getScheduler().runTask(this, () -> block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), item));
-            }
+            ItemStack item = CustomPlugin.getInstance().getItemManager().spawnItemStack(SpawnerItem.CUSTOM_ID, 1);
+            SpawnerItem.setSpawnedType(item, ((CreatureSpawner)block.getState()).getSpawnedType());
+            SpawnerItem.setNatural(item, watcher.isNatural());
+            getServer().getScheduler().runTask(this, () -> block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), item));
         } else {
             ItemStack item = CustomPlugin.getInstance().getItemManager().spawnItemStack(SpawnerItem.CUSTOM_ID, 1);
             SpawnerItem.setSpawnedType(item, ((CreatureSpawner)block.getState()).getSpawnedType());
