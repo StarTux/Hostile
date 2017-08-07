@@ -18,6 +18,10 @@ import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.SpawnerSpawnEvent;
 
+/**
+ * Code for BlockBreakEvent is in HostilePlugin because it handles
+ * events pertaining to normal (non-custom) spawners as well.
+ */
 @Getter @RequiredArgsConstructor
 public final class SpawnerBlock implements CustomBlock {
     public static final String CUSTOM_ID = "hostile:spawner";
@@ -70,6 +74,8 @@ public final class SpawnerBlock implements CustomBlock {
         // State
         private boolean playerPlaced = false;
         private boolean natural = false;
+        private boolean marker = false;
+        private int level = 0;
         // Trans
         private transient int spawnCount = 0;
 
@@ -88,17 +94,21 @@ public final class SpawnerBlock implements CustomBlock {
         }
 
         void save() {
-            Map<String, Boolean> map = new LinkedHashMap<>();
+            Map<String, Object> map = new LinkedHashMap<>();
             map.put("player_placed", playerPlaced);
             map.put("natural", natural);
+            map.put("marker", marker);
+            map.put("level", level);
             CustomPlugin.getInstance().getBlockManager().saveBlockData(this, map);
         }
 
         void load() {
-            Map<String, Boolean> map = (Map<String, Boolean>)CustomPlugin.getInstance().getBlockManager().loadBlockData(this);
+            Map<String, Object> map = (Map<String, Object>)CustomPlugin.getInstance().getBlockManager().loadBlockData(this);
             if (map != null) {
-                playerPlaced = map.get("player_placed");
-                natural = map.get("natural");
+                if (map.containsKey("player_placed")) playerPlaced = (Boolean)map.get("player_placed");
+                if (map.containsKey("natural")) natural = (Boolean)map.get("natural");
+                if (map.containsKey("marker")) marker = (Boolean)map.get("marker");
+                if (map.containsKey("level")) level = ((Number)map.get("level")).intValue();
             }
         }
     }

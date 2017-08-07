@@ -294,7 +294,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onBlockBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
         if (block.getType() != Material.MOB_SPAWNER) return;
@@ -304,15 +304,22 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         if (bw != null) {
             if (!(bw instanceof SpawnerBlock.Watcher)) return;
             SpawnerBlock.Watcher watcher = (SpawnerBlock.Watcher)bw;
+            if (watcher.isMarker()) return;
             CustomPlugin.getInstance().getBlockManager().removeBlockWatcher(watcher);
+            SpawnerItem.State state = new SpawnerItem.State();
+            state.setSpawnedType(((CreatureSpawner)block.getState()).getSpawnedType());
+            state.setNatural(watcher.isNatural());
+            state.setLevel(watcher.getLevel());
             ItemStack item = CustomPlugin.getInstance().getItemManager().spawnItemStack(SpawnerItem.CUSTOM_ID, 1);
-            SpawnerItem.setSpawnedType(item, ((CreatureSpawner)block.getState()).getSpawnedType());
-            SpawnerItem.setNatural(item, watcher.isNatural());
+            SpawnerItem.setState(item, state);
             getServer().getScheduler().runTask(this, () -> block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), item));
         } else {
+            SpawnerItem.State state = new SpawnerItem.State();
+            state.setSpawnedType(((CreatureSpawner)block.getState()).getSpawnedType());
+            state.setNatural(true);
+            state.setLevel(0);
             ItemStack item = CustomPlugin.getInstance().getItemManager().spawnItemStack(SpawnerItem.CUSTOM_ID, 1);
-            SpawnerItem.setSpawnedType(item, ((CreatureSpawner)block.getState()).getSpawnedType());
-            SpawnerItem.setNatural(item, true);
+            SpawnerItem.setState(item, state);
             getServer().getScheduler().runTask(this, () -> block.getWorld().dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), item));
         }
     }

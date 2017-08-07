@@ -1,5 +1,6 @@
 package com.winthier.hostile;
 
+import com.winthier.custom.CustomPlugin;
 import com.winthier.custom.entity.CustomEntity;
 import com.winthier.custom.entity.EntityWatcher;
 import com.winthier.custom.entity.TickableEntity;
@@ -181,8 +182,11 @@ public final class BossEntity implements CustomEntity, TickableEntity {
                         CreatureSpawner spawner = (CreatureSpawner)block.getState();
                         spawner.setSpawnedType(EntityType.ZOMBIE);
                         spawner.update();
+                        SpawnerBlock.Watcher watcher = (SpawnerBlock.Watcher)CustomPlugin.getInstance().getBlockManager().wrapBlock(block, SpawnerBlock.CUSTOM_ID);
+                        watcher.setMarker(true);
+                        watcher.save();
+                        entity.teleport(entity.getLocation().add(0, 1, 0));
                     }
-                    entity.teleport(entity.getLocation().add(0, 1, 0));
                 }
                 break;
             case WITHER:
@@ -222,6 +226,9 @@ public final class BossEntity implements CustomEntity, TickableEntity {
                         CreatureSpawner spawner = (CreatureSpawner)block.getState();
                         spawner.setSpawnedType(EntityType.SPIDER);
                         spawner.update();
+                        SpawnerBlock.Watcher watcher = (SpawnerBlock.Watcher)CustomPlugin.getInstance().getBlockManager().wrapBlock(block, SpawnerBlock.CUSTOM_ID);
+                        watcher.setMarker(true);
+                        watcher.save();
                         entity.teleport(entity.getLocation().add(0, 1, 0));
                     }
                 }

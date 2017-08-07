@@ -7,6 +7,7 @@ import com.winthier.custom.item.UncraftableItem;
 import com.winthier.custom.util.Dirty;
 import com.winthier.custom.util.Msg;
 import com.winthier.generic_events.ItemNameEvent;
+import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.ChatColor;
@@ -38,46 +39,52 @@ public final class SpawnerItem implements CustomItem, UncraftableItem {
     public void onBlockPlace(BlockPlaceEvent event, ItemContext context) {
         Dirty.TagWrapper config = Dirty.TagWrapper.getItemConfigOf(context.getItemStack());
         SpawnerBlock.Watcher watcher = (SpawnerBlock.Watcher)CustomPlugin.getInstance().getBlockManager().wrapBlock(event.getBlock(), SpawnerBlock.CUSTOM_ID);
+        State state = getState(context.getItemStack());
         watcher.setPlayerPlaced(true);
-        watcher.setNatural(isNatural(context.getItemStack()));
+        watcher.setNatural(state.natural);
+        watcher.setLevel(state.level);
         watcher.save();
-        EntityType et = getSpawnedType(context.getItemStack());
-        if (et != null) {
-            CreatureSpawner spawner = (CreatureSpawner)event.getBlock().getState();
-            spawner.setSpawnedType(et);
-            spawner.update();
-        }
+        CreatureSpawner spawner = (CreatureSpawner)event.getBlock().getState();
+        spawner.setSpawnedType(state.spawnedType);
+        spawner.update();
     }
 
     @EventHandler
     public void onItemName(ItemNameEvent event, ItemContext context) {
-        EntityType type = getSpawnedType(event.getItem());
-        if (type == null) return;
-        event.setItemName(Msg.camelCase(type.name()) + " Spawner");
+        State state = getState(context.getItemStack());
+        EntityType type = state.spawnedType;
+        int level = state.level;
+        event.setItemName("Level " + level + " " + Msg.camelCase(type.name()) + " Spawner");
     }
 
-    public static EntityType getSpawnedType(ItemStack item) {
-        Dirty.TagWrapper config = Dirty.TagWrapper.getItemConfigOf(item);
-        String name = config.getString("entity");
-        if (name == null) return null;
-        return EntityType.valueOf(name.toUpperCase());
+    @Data
+    static final class State {
+        private EntityType spawnedType;
+        private boolean natural;
+        private int level;
     }
 
-    public static void setSpawnedType(ItemStack item, EntityType type) {
+    static State getState(ItemStack item) {
         Dirty.TagWrapper config = Dirty.TagWrapper.getItemConfigOf(item);
-        config.setString("entity", type.name());
+        State result = new State();
+        String tmp = config.getString("entity");
+        if (tmp != null) {
+            result.spawnedType = EntityType.valueOf(tmp.toUpperCase());
+        } else {
+            result.spawnedType = EntityType.ZOMBIE;
+        }
+        result.natural = config.getBoolean("natural");
+        result.level = config.getInt("level");
+        return result;
+    }
+
+    static void setState(ItemStack item, State state) {
+        Dirty.TagWrapper config = Dirty.TagWrapper.getItemConfigOf(item);
+        config.setString("entity", state.spawnedType.name());
+        config.setBoolean("natural", state.natural);
+        config.setInt("level", state.level);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(ChatColor.RESET + Msg.camelCase(type.name()) + " Spawner");
+        meta.setDisplayName(ChatColor.RESET + "Level " + state.level + " " + Msg.camelCase(state.spawnedType.name()) + " Spawner");
         item.setItemMeta(meta);
-    }
-
-    public static boolean isNatural(ItemStack item) {
-        Dirty.TagWrapper config = Dirty.TagWrapper.getItemConfigOf(item);
-        return config.getBoolean("natural");
-    }
-
-    public static void setNatural(ItemStack item, boolean natural) {
-        Dirty.TagWrapper config = Dirty.TagWrapper.getItemConfigOf(item);
-        config.setBoolean("natural", natural);
     }
 }
