@@ -3,7 +3,6 @@ package com.winthier.hostile;
 import com.winthier.custom.CustomPlugin;
 import com.winthier.custom.item.CustomItem;
 import com.winthier.custom.item.ItemContext;
-import com.winthier.custom.item.UncraftableItem;
 import com.winthier.custom.util.Dirty;
 import com.winthier.custom.util.Msg;
 import com.winthier.generic_events.ItemNameEvent;
@@ -12,16 +11,21 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryType;
+import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 @Getter @RequiredArgsConstructor
-public final class SpawnerItem implements CustomItem, UncraftableItem {
+public final class SpawnerItem implements CustomItem {
     public static final String CUSTOM_ID = "hostile:spawner";
     private final HostilePlugin plugin;
 
@@ -55,6 +59,55 @@ public final class SpawnerItem implements CustomItem, UncraftableItem {
         EntityType type = state.spawnedType;
         int level = state.level;
         event.setItemName("Level " + level + " " + Msg.camelCase(type.name()) + " Spawner");
+    }
+
+    @EventHandler
+    public void onPrepareAnvil(PrepareAnvilEvent event, ItemContext context) {
+        if (context.getPosition() != ItemContext.Position.ANVIL_LEFT) return;
+        String text = event.getInventory().getRenameText();
+        if (event.getInventory().getItem(1) == null) {
+            event.setResult(null);
+            return;
+        }
+        if (!CUSTOM_ID.equals(CustomPlugin.getInstance().getItemManager().getCustomId(event.getInventory().getItem(1)))) {
+            event.setResult(null);
+            return;
+        }
+        State a = getState(event.getInventory().getItem(0));
+        State b = getState(event.getInventory().getItem(1));
+        if (a.spawnedType != b.spawnedType) {
+            event.setResult(null);
+            return;
+        }
+        if (a.level != b.level) {
+            event.setResult(null);
+            return;
+        }
+        ItemStack result = CustomPlugin.getInstance().getItemManager().spawnItemStack(CUSTOM_ID, 1);
+        State c = new State();
+        c.spawnedType = a.spawnedType;
+        c.natural = false;
+        c.level = a.level + 1;
+        setState(result, c);
+        event.setResult(result);
+        event.getInventory().setRepairCost(0);
+    }
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event, ItemContext context) {
+        if (event.getInventory().getType() != InventoryType.ANVIL) return;
+        if (event.getSlot() != 2) return;
+        if (!event.isShiftClick() && event.getCursor() != null && event.getCursor().getType() != Material.AIR) return;
+        event.setCancelled(true);
+        if (event.isShiftClick()) {
+            if (!context.getPlayer().getInventory().addItem(context.getItemStack()).isEmpty()) {
+                return;
+            }
+        } else {
+            event.setCursor(context.getItemStack());
+        }
+        event.getInventory().clear();
+        context.getPlayer().playSound(context.getPlayer().getEyeLocation(), Sound.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 0.3f, 1.5f);
     }
 
     @Data
