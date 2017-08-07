@@ -4,19 +4,25 @@ import com.winthier.custom.CustomPlugin;
 import com.winthier.custom.block.BlockContext;
 import com.winthier.custom.block.BlockWatcher;
 import com.winthier.custom.block.CustomBlock;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.Value;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.CreatureSpawner;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.SpawnerSpawnEvent;
+import org.bukkit.metadata.FixedMetadataValue;
 
 /**
  * Code for BlockBreakEvent is in HostilePlugin because it handles
@@ -25,8 +31,10 @@ import org.bukkit.event.entity.SpawnerSpawnEvent;
 @Getter @RequiredArgsConstructor
 public final class SpawnerBlock implements CustomBlock {
     public static final String CUSTOM_ID = "hostile:spawner";
+    public static final String METADATA_KEY = "Winthier.Hostile.SpawnerLevel";
     private final HostilePlugin plugin;
     private final Random random = new Random(System.currentTimeMillis());
+    private final List<Spawning> spawnings = new ArrayList<>();
 
     @Override
     public String getCustomId() {
@@ -64,7 +72,13 @@ public final class SpawnerBlock implements CustomBlock {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onSpawnerSpawn(SpawnerSpawnEvent event, BlockContext context) {
-        ((Watcher)context.getBlockWatcher()).onSpawnerSpawn();
+        ((Watcher)context.getBlockWatcher()).onSpawnerSpawn(event);
+    }
+
+    @Value
+    static final class Spawning {
+        private final int x, z;
+        private final long time;
     }
 
     @Getter @Setter @RequiredArgsConstructor
@@ -79,17 +93,34 @@ public final class SpawnerBlock implements CustomBlock {
         // Trans
         private transient int spawnCount = 0;
 
-        void onSpawnerSpawn() {
-            spawnCount += 1;
-            if (playerPlaced || natural) return;
-            final int spawnerLimit = 1000;
-            int rnd = random.nextInt(spawnerLimit);
-            if (rnd < spawnCount) {
-                plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        block.getWorld().createExplosion(block.getLocation().add(0.5, 0.5, 0.5), 4f, true);
-                        if (block.getType() == Material.MOB_SPAWNER) block.breakNaturally();
-                    });
-                plugin.getLogger().info(String.format("Exploded spawner in %s at %d %d %d (%d/%d)", block.getWorld().getName(), block.getX(), block.getY(), block.getZ(), spawnCount, spawnerLimit));
+        void onSpawnerSpawn(SpawnerSpawnEvent event) {
+            if (!playerPlaced && !natural) {
+                spawnCount += 1;
+                final int spawnerLimit = 1000;
+                int rnd = random.nextInt(spawnerLimit);
+                if (rnd < spawnCount) {
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                            block.getWorld().createExplosion(block.getLocation().add(0.5, 0.5, 0.5), 4f, true);
+                            if (block.getType() == Material.MOB_SPAWNER) block.breakNaturally();
+                        });
+                    plugin.getLogger().info(String.format("Exploded spawner in %s at %d %d %d (%d/%d)", block.getWorld().getName(), block.getX(), block.getY(), block.getZ(), spawnCount, spawnerLimit));
+                }
+            } else {
+                long now = System.currentTimeMillis();
+                for (Iterator<Spawning> iter = spawnings.iterator(); iter.hasNext();) {
+                    Spawning spawning = iter.next();
+                    if (spawning.time + 10000 < now) {
+                        iter.remove();
+                    } else if (Math.abs(block.getX() - spawning.x) < 16
+                               || Math.abs(block.getZ() - spawning.z) < 16) {
+                        event.setCancelled(true);
+                        CreatureSpawner spawner = (CreatureSpawner)block.getState();
+                        spawner.setDelay(200);
+                        return;
+                    }
+                }
+                spawnings.add(new Spawning(block.getX(), block.getZ(), now));
+                event.getEntity().setMetadata(METADATA_KEY, new FixedMetadataValue(plugin, level));
             }
         }
 

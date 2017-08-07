@@ -8,6 +8,7 @@ import com.winthier.custom.event.CustomTickEvent;
 import com.winthier.ore.DungeonRevealEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -33,6 +34,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.map.MapCursor;
 import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
@@ -129,6 +131,43 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
+        for (MetadataValue meta: event.getEntity().getMetadata(SpawnerBlock.METADATA_KEY)) {
+            if (meta.getOwningPlugin() == this) {
+                int level = meta.asInt();
+                if (level < 0) level = 0;
+                for (Iterator<ItemStack> iter = event.getDrops().iterator(); iter.hasNext();) {
+                    ItemStack drop = iter.next();
+                    if (drop.getType().getMaxStackSize() > 1) {
+                        int amount;
+                        switch (level) {
+                        case 0:
+                            amount = 0;
+                            break;
+                        case 1:
+                            amount = drop.getAmount() / 2;
+                            break;
+                        case 2:
+                            amount = drop.getAmount();
+                            break;
+                        case 3:
+                            amount = (drop.getAmount() * 3) / 2;
+                            break;
+                        case 4:
+                            amount = drop.getAmount() * 2;
+                            break;
+                        default:
+                            amount = (drop.getAmount() * level) / 2;
+                        }
+                        if (amount <= 0) {
+                            iter.remove();
+                        } else {
+                            drop.setAmount(amount);
+                        }
+                    }
+                }
+                break;
+            }
+        }
         if (!isKillWorld(event.getEntity().getWorld())) return;
         for (MonsterHiveBlock.Watcher hive: hives.values()) hive.entityDidDie(event.getEntity());
         long time = event.getEntity().getWorld().getTime();
