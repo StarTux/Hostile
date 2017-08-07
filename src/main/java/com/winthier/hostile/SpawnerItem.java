@@ -42,7 +42,11 @@ public final class SpawnerItem implements CustomItem, UncraftableItem {
         watcher.setNatural(isNatural(context.getItemStack()));
         watcher.save();
         EntityType et = getSpawnedType(context.getItemStack());
-        if (et != null) ((CreatureSpawner)event.getBlock().getState()).setSpawnedType(et);
+        if (et != null) {
+            CreatureSpawner spawner = (CreatureSpawner)event.getBlock().getState();
+            spawner.setSpawnedType(et);
+            spawner.update();
+        }
     }
 
     @EventHandler

@@ -186,7 +186,9 @@ public final class BossEntity implements CustomEntity, TickableEntity {
                     Block block = entity.getLocation().getBlock();
                     if (block.getType() == Material.AIR) {
                         block.setType(Material.MOB_SPAWNER);
-                        ((CreatureSpawner)block.getState()).setSpawnedType(EntityType.ZOMBIE);
+                        CreaturSpawner spawner = (CreatureSpawner)block.getState();
+                        spawner.setSpawnedType(EntityType.ZOMBIE);
+                        spawner.update();
                     }
                     entity.teleport(entity.getLocation().add(0, 1, 0));
                 }
@@ -225,7 +227,9 @@ public final class BossEntity implements CustomEntity, TickableEntity {
                     Block block = entity.getLocation().getBlock();
                     if (block.getType() == Material.AIR) {
                         block.setType(Material.MOB_SPAWNER);
-                        ((CreatureSpawner)block.getState()).setSpawnedType(EntityType.SPIDER);
+                        CreatureSpawner spawner = (CreatureSpawner)block.getState();
+                        spawner.setSpawnedType(EntityType.SPIDER);
+                        spawner.update();
                         entity.teleport(entity.getLocation().add(0, 1, 0));
                     }
                 }

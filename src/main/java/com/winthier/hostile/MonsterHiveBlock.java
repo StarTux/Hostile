@@ -54,8 +54,10 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
     @Override
     public void setBlock(Block block) {
         block.setType(Material.MOB_SPAWNER);
-        ((CreatureSpawner)block.getState()).setSpawnedType(EntityType.BLAZE);
-        ((CreatureSpawner)block.getState()).setDelay(999);
+        CreatureSpawner spawner = (CreatureSpawner)block.getState();
+        spawner.setSpawnedType(EntityType.BLAZE);
+        spawner.setDelay(9999);
+        spawner.update();
     }
 
     @Override
@@ -153,7 +155,10 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
             if (ticks % 200 == 0 && block.getType() == Material.MOB_SPAWNER) {
                 try {
                     CreatureSpawner creatureSpawner = (CreatureSpawner)block.getState();
-                    if (creatureSpawner != null) creatureSpawner.setDelay(999);
+                    if (creatureSpawner != null) {
+                        creatureSpawner.setDelay(9999);
+                        creatureSpawner.update();
+                    }
                 } catch (Exception e) {
                     plugin.getLogger().warning(CUSTOM_ID + ": Block=" + block + ": Type=" + block.getType());
                     e.printStackTrace();
