@@ -101,6 +101,7 @@ public final class SpawnerItem implements CustomItem {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event, ItemContext context) {
         if (event.getInventory().getType() != InventoryType.ANVIL) return;
+        if (!event.getClickedInventory().equals(event.getView().getTopInventory())) return;
         if (event.getSlot() != 2) return;
         if (!event.isShiftClick() && event.getCursor() != null && event.getCursor().getType() != Material.AIR) return;
         event.setCancelled(true);
