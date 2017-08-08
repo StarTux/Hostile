@@ -340,6 +340,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
         if (tool == null || !tool.containsEnchantment(Enchantment.SILK_TOUCH)) return;
         BlockWatcher bw = CustomPlugin.getInstance().getBlockManager().getBlockWatcher(block);
+        event.setExpToDrop(0);
         if (bw != null) {
             if (!(bw instanceof SpawnerBlock.Watcher)) return;
             SpawnerBlock.Watcher watcher = (SpawnerBlock.Watcher)bw;
