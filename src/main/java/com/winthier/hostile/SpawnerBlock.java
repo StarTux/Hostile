@@ -17,6 +17,7 @@ import lombok.Value;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.CreatureSpawner;
+import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockExplodeEvent;
@@ -79,6 +80,7 @@ public final class SpawnerBlock implements CustomBlock {
     static final class Spawning {
         private final int x, z;
         private final long time;
+        private final EntityType entityType;
     }
 
     @Getter @Setter @RequiredArgsConstructor
@@ -107,19 +109,22 @@ public final class SpawnerBlock implements CustomBlock {
                 }
             } else {
                 long now = System.currentTimeMillis();
+                EntityType et = event.getEntity().getType();
                 for (Iterator<Spawning> iter = spawnings.iterator(); iter.hasNext();) {
                     Spawning spawning = iter.next();
                     if (spawning.time + 10000 < now) {
                         iter.remove();
-                    } else if (Math.abs(block.getX() - spawning.x) < 16
-                               || Math.abs(block.getZ() - spawning.z) < 16) {
+                    } else if (et == spawning.entityType
+                               && (Math.abs(block.getX() - spawning.x) < 16
+                                   || Math.abs(block.getZ() - spawning.z) < 16)) {
                         event.setCancelled(true);
                         CreatureSpawner spawner = (CreatureSpawner)block.getState();
                         spawner.setDelay(200);
+                        spawner.update();
                         return;
                     }
                 }
-                spawnings.add(new Spawning(block.getX(), block.getZ(), now));
+                spawnings.add(new Spawning(block.getX(), block.getZ(), now, et));
                 event.getEntity().setMetadata(METADATA_KEY, new FixedMetadataValue(plugin, level));
             }
         }
