@@ -73,6 +73,11 @@ public final class SpawnerItem implements CustomItem {
             event.setResult(null);
             return;
         }
+        if (event.getInventory().getItem(0).getAmount() != 1
+            || event.getInventory().getItem(1).getAmount() != 1) {
+            event.setResult(null);
+            return;
+        }
         State a = getState(event.getInventory().getItem(0));
         State b = getState(event.getInventory().getItem(1));
         if (a.spawnedType != b.spawnedType) {
