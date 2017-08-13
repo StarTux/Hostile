@@ -80,7 +80,6 @@ public final class SpawnerBlock implements CustomBlock {
     static final class Spawning {
         private final int x, z;
         private final long time;
-        private final EntityType entityType;
     }
 
     @Getter @Setter @RequiredArgsConstructor
@@ -109,14 +108,12 @@ public final class SpawnerBlock implements CustomBlock {
                 }
             } else {
                 long now = System.currentTimeMillis();
-                EntityType et = event.getEntity().getType();
                 for (Iterator<Spawning> iter = spawnings.iterator(); iter.hasNext();) {
                     Spawning spawning = iter.next();
                     if (spawning.time + 10000 < now) {
                         iter.remove();
-                    } else if (et == spawning.entityType
-                               && (Math.abs(block.getX() - spawning.x) < 16
-                                   || Math.abs(block.getZ() - spawning.z) < 16)) {
+                    } else if (Math.abs(block.getX() - spawning.x) < 16
+                               || Math.abs(block.getZ() - spawning.z) < 16) {
                         event.setCancelled(true);
                         CreatureSpawner spawner = (CreatureSpawner)block.getState();
                         spawner.setDelay(200);
@@ -124,7 +121,7 @@ public final class SpawnerBlock implements CustomBlock {
                         return;
                     }
                 }
-                spawnings.add(new Spawning(block.getX(), block.getZ(), now, et));
+                spawnings.add(new Spawning(block.getX(), block.getZ(), now));
                 event.getEntity().setMetadata(METADATA_KEY, new FixedMetadataValue(plugin, level));
             }
         }
