@@ -18,7 +18,6 @@ enum VanillaMob implements MobType {
     SPIDER            (EntityType.SPIDER,           0, 10, 1),
     SLIME             (EntityType.SLIME,            0,  5, 1),
     MAGMA_CUBE        (EntityType.MAGMA_CUBE,      10,  5, 1),
-    ENDERMAN          (EntityType.ENDERMAN,        10, 10, 1),
     STRAY             (EntityType.STRAY,           10,  5, 1),
     HUSK              (EntityType.HUSK,            10,  5, 1),
     SPIDER_JOCKEY     (EntityType.SKELETON,        10,  5, 2) {
