@@ -276,10 +276,12 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                 if (!spawnMobs.isEmpty()) {
                     MobType mobType = spawnMobs.get(spawnMobs.size() - 1);
                     Entity e = plugin.tryToSpawnMob(block, mobType);
-                    if (e != null && e.getType() != EntityType.ENDERMAN) {
-                        e.addScoreboardTag("ShowOnMiniMap");
+                    if (e != null) {
+                        if (e.getType() != EntityType.ENDERMAN) {
+                            e.addScoreboardTag("ShowOnMiniMap");
+                            mobs.put(e.getUniqueId(), mobType);
+                        }
                         spawnMobs.remove(spawnMobs.size() - 1);
-                        mobs.put(e.getUniqueId(), mobType);
                     }
                 }
             }
