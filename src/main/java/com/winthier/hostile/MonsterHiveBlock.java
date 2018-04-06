@@ -256,14 +256,14 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                     int amount = Math.max(1, (totalMobs * chance) / totalChance);
                     for (int i = 0; i < amount; i += 1) spawnMobs.add(type);
                 }
-                bossbar = plugin.getServer().createBossBar("Level " + level, BarColor.RED, BarStyle.SOLID);
+                bossbar = plugin.getServer().createBossBar("Hive Level " + level, BarColor.RED, BarStyle.SOLID);
                 bossbar.setVisible(true);
                 bossbar.setProgress(1.0);
                 mobCount = spawnMobs.size();
             } else if (currentLevelTicks == 20) {
                 // Announce
                 String title = "";
-                String subtitle = "" + ChatColor.RED + "Level " + level;
+                String subtitle = "" + ChatColor.RED + "Hive Level " + level;
                 for (Player player: block.getWorld().getPlayers()) {
                     Block pb = player.getLocation().getBlock();
                     if (Math.abs(pb.getX() - block.getX()) < 32

@@ -168,31 +168,30 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
                 break;
             }
         }
-        if (!isKillWorld(event.getEntity().getWorld())) return;
-        for (MonsterHiveBlock.Watcher hive: hives.values()) hive.entityDidDie(event.getEntity());
-        long time = event.getEntity().getWorld().getTime();
-        if (time < 13000 || time > 23000) return;
-        if (!(event.getEntity() instanceof Monster)) return;
-        if (event.getEntity().getKiller() == null) return;
-        if (event.getEntity().getLocation().getBlock().getLightFromSky() == 0) return;
-        int chance = 0;
-        Player player = event.getEntity().getKiller();
-        for (ItemStack item: player.getEquipment().getArmorContents()) {
-            if (item == null) continue;
-            switch (item.getType()) {
-            case DIAMOND_HELMET:
-            case DIAMOND_CHESTPLATE:
-            case DIAMOND_LEGGINGS:
-            case DIAMOND_BOOTS:
-                chance += 1;
-            default: break;
+        if (isKillWorld(event.getEntity().getWorld())) {
+            for (MonsterHiveBlock.Watcher hive: hives.values()) hive.entityDidDie(event.getEntity());
+            if (!(event.getEntity() instanceof Monster)) return;
+            if (event.getEntity().getKiller() == null) return;
+            if (event.getEntity().getLocation().getBlock().getLightFromSky() == 0) return;
+            int chance = 0;
+            Player player = event.getEntity().getKiller();
+            for (ItemStack item: player.getEquipment().getArmorContents()) {
+                if (item == null) continue;
+                switch (item.getType()) {
+                case DIAMOND_HELMET:
+                case DIAMOND_CHESTPLATE:
+                case DIAMOND_LEGGINGS:
+                case DIAMOND_BOOTS:
+                    chance += 1;
+                default: break;
+                }
             }
+            if (chance == 0) return;
+            if (random.nextInt(100) >= chance) return;
+            Block block = event.getEntity().getKiller().getLocation().getBlock();
+            if (!isKillWorld(block.getWorld())) return;
+            tryToSpawnHive(block);
         }
-        if (chance == 0) return;
-        if (random.nextInt(100) >= chance) return;
-        Block block = event.getEntity().getKiller().getLocation().getBlock();
-        if (!isKillWorld(block.getWorld())) return;
-        tryToSpawnHive(block);
     }
 
     void registerHive(MonsterHiveBlock.Watcher watcher) {

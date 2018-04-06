@@ -1,6 +1,7 @@
 package com.winthier.hostile;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.CaveSpider;
 import org.bukkit.entity.Chicken;
 import org.bukkit.entity.Creeper;
@@ -9,6 +10,8 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Skeleton;
 import org.bukkit.entity.Spider;
 import org.bukkit.entity.Zombie;
+import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.inventory.ItemStack;
 
 enum VanillaMob implements MobType {
     CREEPER           (EntityType.CREEPER,          0, 10, 2),
@@ -69,6 +72,18 @@ enum VanillaMob implements MobType {
     }
 
     LivingEntity spawn(Location location) {
-        return (LivingEntity)location.getWorld().spawnEntity(location, entityType);
+        LivingEntity result = (LivingEntity)location.getWorld().spawnEntity(location, entityType);
+        switch (result.getType()) {
+        case ZOMBIE: case SKELETON: case HUSK: case STRAY: case ZOMBIE_VILLAGER:
+            EntityEquipment equip = result.getEquipment();
+            if (equip.getHelmet() == null || equip.getHelmet().getType() == Material.AIR) {
+                ItemStack helmet = new ItemStack(Material.IRON_HELMET);
+                equip.setHelmet(helmet);
+                equip.setHelmetDropChance(0.0f);
+            }
+            break;
+        default: break;
+        }
+        return result;
     }
 }
