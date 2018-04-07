@@ -288,16 +288,6 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         Location location = block.getLocation().add(0.5, 0.0, 0.5);
         if (type instanceof HostileMob.Type) {
             HostileMob.Type htype = (HostileMob.Type)type;
-            switch (htype) {
-            case BATTER_BAT:
-            case ANGRY_PARROT:
-                if (block.getLightFromSky() == 0) return null;
-                break;
-            case QUEEN_SPIDER:
-                if (block.getLightLevel() > 7) return null;
-                break;
-            default: break;
-            }
             EntityWatcher watcher = CustomPlugin.getInstance().getEntityManager().spawnEntity(location, htype.customId);
             return watcher.getEntity();
         } else if (type instanceof BossEntity.BossType) {
@@ -306,12 +296,6 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
             return watcher.getEntity();
         } else if (type instanceof VanillaMob) {
             VanillaMob vtype = (VanillaMob)type;
-            switch (vtype.entityType) {
-            case SPIDER:
-                if (block.getLightLevel() > 7) return null;
-                break;
-            default: break;
-            }
             return vtype.spawn(location);
         } else {
             return null;
