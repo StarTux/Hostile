@@ -74,7 +74,7 @@ enum VanillaMob implements MobType {
     LivingEntity spawn(Location location) {
         LivingEntity result = (LivingEntity)location.getWorld().spawnEntity(location, entityType);
         switch (result.getType()) {
-        case ZOMBIE: case SKELETON: case HUSK: case STRAY: case ZOMBIE_VILLAGER:
+        case ZOMBIE: case SKELETON: case STRAY: case ZOMBIE_VILLAGER:
             EntityEquipment equip = result.getEquipment();
             if (equip.getHelmet() == null || equip.getHelmet().getType() == Material.AIR) {
                 ItemStack helmet = new ItemStack(Material.IRON_HELMET);
