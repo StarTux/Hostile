@@ -56,7 +56,7 @@ public final class QueenSpiderEntity implements CustomEntity, HostileMob, Tickab
             ticks += 1;
             if (ticks % 20 != 0) return;
             if (entity.getTarget() == null) return;
-            if (entity.getLocation().getBlock().getType() == Material.AIR) entity.getLocation().getBlock().setType(Material.WEB);
+            if (entity.getLocation().getBlock().getType() == Material.AIR) entity.getLocation().getBlock().setType(Material.COBWEB);
             countdown -= plugin.getRandom().nextInt(3) * 20;
             if (countdown > 0) {
                 return;

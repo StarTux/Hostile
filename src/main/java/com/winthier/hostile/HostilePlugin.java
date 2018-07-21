@@ -237,8 +237,8 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
         block = block.getWorld().getHighestBlockAt(block.getX() + dx, block.getZ() + dz);
         if (block.getY() < 1 || block.getY() > 127 || block.isLiquid()) return false;
         switch (block.getBiome()) {
-        case MUSHROOM_ISLAND:
-        case MUSHROOM_ISLAND_SHORE:
+        case MUSHROOM_FIELDS:
+        case MUSHROOM_FIELD_SHORE:
             return false;
         default:
             break;
@@ -319,7 +319,7 @@ public final class HostilePlugin extends JavaPlugin implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onBlockBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
-        if (block.getType() != Material.MOB_SPAWNER) return;
+        if (block.getType() != Material.SPAWNER) return;
         ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
         if (tool == null || !tool.containsEnchantment(Enchantment.SILK_TOUCH)) return;
         BlockWatcher bw = CustomPlugin.getInstance().getBlockManager().getBlockWatcher(block);

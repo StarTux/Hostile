@@ -47,32 +47,32 @@ public final class FartGoblinEntity implements CustomEntity, HostileMob {
         creeper.getWorld().spawn(creeper.getLocation().add(0, (double)offset, 0), AreaEffectCloud.class, c -> {
                 switch (plugin.getRandom().nextInt(10)) {
                 case 0:
-                    c.addCustomEffect(new PotionEffect(PotionEffectType.WEAKNESS, 20 * 20, 0), true);
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.WEAKNESS, 20 * 20, 1), true);
                     break;
                 case 1:
-                    c.addCustomEffect(new PotionEffect(PotionEffectType.SLOW, 20 * 20, 0), true);
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.SLOW, 20 * 20, 2), true);
                     break;
                 case 2:
                     c.addCustomEffect(new PotionEffect(PotionEffectType.HARM, 1, 0), true);
                     break;
                 case 3:
-                    c.addCustomEffect(new PotionEffect(PotionEffectType.WITHER, 20 * 10, 0), true);
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.WITHER, 20 * 10, 1), true);
                     break;
                 case 4:
                     c.addCustomEffect(new PotionEffect(PotionEffectType.LEVITATION, 20 * 3, 0), true);
                     break;
                 case 5:
-                    c.addCustomEffect(new PotionEffect(PotionEffectType.HUNGER, 20 * 10, 0), true);
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.HUNGER, 20 * 20, 1), true);
                     break;
                 case 6:
-                    c.addCustomEffect(new PotionEffect(PotionEffectType.CONFUSION, 20 * 5, 0), true);
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.CONFUSION, 20 * 10, 0), true);
                     break;
                 case 7:
-                    c.addCustomEffect(new PotionEffect(PotionEffectType.BLINDNESS, 20 * 5, 0), true);
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.BLINDNESS, 20 * 10, 0), true);
                     break;
                 case 8:
                 default:
-                    c.addCustomEffect(new PotionEffect(PotionEffectType.POISON, 20 * 10, 0), true);
+                    c.addCustomEffect(new PotionEffect(PotionEffectType.POISON, 20 * 20, 1), true);
                     break;
                 }
                 c.setColor(Color.GREEN);

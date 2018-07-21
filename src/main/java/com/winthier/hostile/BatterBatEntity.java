@@ -18,7 +18,6 @@ import org.bukkit.entity.Bat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.material.MaterialData;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
@@ -144,35 +143,35 @@ public final class BatterBatEntity implements CustomEntity, TickableEntity, Host
                 Location loc = block.getLocation().add(0.5, 0.5, 0.5);
                 switch (plugin.getRandom().nextInt(5)) {
                 case 0:
-                    entity.getWorld().spawnFallingBlock(loc, new MaterialData(Material.SAND)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -2, 0), new MaterialData(Material.TNT, (byte)1)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), new MaterialData(Material.SAND)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), new MaterialData(Material.SAND)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), new MaterialData(Material.SAND)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, 1), new MaterialData(Material.SAND)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc, Material.SAND.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -2, 0), Material.TNT.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), Material.SAND.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), Material.SAND.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), Material.SAND.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, 1), Material.SAND.createBlockData()).setDropItem(false);
                     break;
                 case 1:
-                    entity.getWorld().spawnFallingBlock(loc, new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -2, 0), new MaterialData(Material.TNT, (byte)1)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, 1), new MaterialData(Material.SAND, (byte)1)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc, Material.RED_SAND.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -2, 0), Material.TNT.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), Material.RED_SAND.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), Material.RED_SAND.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), Material.RED_SAND.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, 1), Material.RED_SAND.createBlockData()).setDropItem(false);
                     break;
                 case 2:
-                    entity.getWorld().spawnFallingBlock(loc, new MaterialData(Material.GRAVEL)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -2, 0), new MaterialData(Material.TNT, (byte)1)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), new MaterialData(Material.GRAVEL)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), new MaterialData(Material.GRAVEL)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), new MaterialData(Material.GRAVEL)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, 1), new MaterialData(Material.GRAVEL)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc, Material.GRAVEL.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, -2, 0), Material.TNT.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), Material.GRAVEL.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), Material.GRAVEL.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), Material.GRAVEL.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, 1), Material.GRAVEL.createBlockData()).setDropItem(false);
                     break;
                 case 3:
-                    entity.getWorld().spawnFallingBlock(loc, new MaterialData(Material.MAGMA)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), new MaterialData(Material.MAGMA)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), new MaterialData(Material.MAGMA)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), new MaterialData(Material.MAGMA)).setDropItem(false);
-                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, 1), new MaterialData(Material.MAGMA)).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc, Material.MAGMA_BLOCK.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(-1, 0, 0), Material.MAGMA_BLOCK.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(1, 0, 0), Material.MAGMA_BLOCK.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, -1), Material.MAGMA_BLOCK.createBlockData()).setDropItem(false);
+                    entity.getWorld().spawnFallingBlock(loc.clone().add(0, 0, 1), Material.MAGMA_BLOCK.createBlockData()).setDropItem(false);
                     break;
                 case 4:
                     entity.getWorld().spawnEntity(loc, EntityType.PRIMED_TNT);

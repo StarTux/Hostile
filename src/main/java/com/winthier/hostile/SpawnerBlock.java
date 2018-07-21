@@ -44,7 +44,7 @@ public final class SpawnerBlock implements CustomBlock {
 
     @Override
     public void setBlock(Block block) {
-        block.setType(Material.MOB_SPAWNER);
+        block.setType(Material.SPAWNER);
     }
 
     @Override
@@ -54,7 +54,7 @@ public final class SpawnerBlock implements CustomBlock {
 
     @Override
     public void blockWasLoaded(BlockWatcher watcher) {
-        if (watcher.getBlock().getType() != Material.MOB_SPAWNER) {
+        if (watcher.getBlock().getType() != Material.SPAWNER) {
             CustomPlugin.getInstance().getBlockManager().removeBlockWatcher(watcher);
         } else {
             ((Watcher)watcher).load();
@@ -102,7 +102,7 @@ public final class SpawnerBlock implements CustomBlock {
                 if (rnd < spawnCount) {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
                             block.getWorld().createExplosion(block.getLocation().add(0.5, 0.5, 0.5), 4f, true);
-                            if (block.getType() == Material.MOB_SPAWNER) block.breakNaturally();
+                            if (block.getType() == Material.SPAWNER) block.breakNaturally();
                         });
                     plugin.getLogger().info(String.format("Exploded spawner in %s at %d %d %d (%d/%d)", block.getWorld().getName(), block.getX(), block.getY(), block.getZ(), spawnCount, spawnerLimit));
                 }
@@ -135,6 +135,7 @@ public final class SpawnerBlock implements CustomBlock {
             CustomPlugin.getInstance().getBlockManager().saveBlockData(this, map);
         }
 
+        @SuppressWarnings("unchecked")
         void load() {
             Map<String, Object> map = (Map<String, Object>)CustomPlugin.getInstance().getBlockManager().loadBlockData(this);
             if (map != null) {

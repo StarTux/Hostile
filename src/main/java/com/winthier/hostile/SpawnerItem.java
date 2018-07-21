@@ -36,7 +36,7 @@ public final class SpawnerItem implements CustomItem {
 
     @Override
     public ItemStack spawnItemStack(int amount) {
-        return new ItemStack(Material.MOB_SPAWNER, amount);
+        return new ItemStack(Material.SPAWNER, amount);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
@@ -110,7 +110,7 @@ public final class SpawnerItem implements CustomItem {
                 return;
             }
         } else {
-            event.setCursor(context.getItemStack());
+            event.getView().setCursor(context.getItemStack());
         }
         event.getInventory().clear();
         context.getPlayer().playSound(context.getPlayer().getEyeLocation(), Sound.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 0.3f, 1.5f);

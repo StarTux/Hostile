@@ -50,7 +50,7 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
 
     @Override
     public void setBlock(Block block) {
-        block.setType(Material.MOB_SPAWNER);
+        block.setType(Material.SPAWNER);
         CreatureSpawner spawner = (CreatureSpawner)block.getState();
         spawner.setSpawnedType(EntityType.BLAZE);
         spawner.setDelay(9999);
@@ -142,14 +142,14 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                 plugin.registerHive(this);
             }
             // Check identity
-            if (block.getType() != Material.MOB_SPAWNER
+            if (block.getType() != Material.SPAWNER
                 && block.getType() != Material.BEDROCK) {
                 CustomPlugin.getInstance().getBlockManager().removeBlockWatcher(this);
                 plugin.unregisterHive(this);
                 return;
             }
             // Count hostiles and players nearby once per second
-            if (ticks % 200 == 0 && block.getType() == Material.MOB_SPAWNER) {
+            if (ticks % 200 == 0 && block.getType() == Material.SPAWNER) {
                 try {
                     CreatureSpawner creatureSpawner = (CreatureSpawner)block.getState();
                     if (creatureSpawner != null) {
@@ -300,7 +300,7 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                 } else if (level >= 20) {
                     matShell = Material.NETHERRACK;
                 } else {
-                    matShell = Material.STAINED_GLASS;
+                    matShell = Material.BLACK_STAINED_GLASS;
                 }
                 Vector vecShell = new Vector(cx, cy, cz).normalize();
                 BlockIterator iterShell = new BlockIterator(block.getWorld(), new Vector(block.getX(), block.getY(), block.getZ()), vecShell, 0.0, 10);
@@ -313,7 +313,6 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                     if (dx * dx + dy * dy + dz * dz > 9) break;
                     if (blockShell.getType() == matShell) continue;
                     blockShell.setType(matShell);
-                    if (matShell == Material.STAINED_GLASS) blockShell.setData((byte)15);
                     cooldownShell = 20;
                     break;
                 }
@@ -327,11 +326,11 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                     Material mat;
                     switch (random.nextInt(7)) {
                     case 0: mat = Material.NETHER_BRICK; break;
-                    case 1: mat = Material.RED_NETHER_BRICK; break;
-                    case 3: case 4: mat = Material.ENDER_STONE; break;
+                    case 1: mat = Material.RED_NETHER_BRICKS; break;
+                    case 3: case 4: mat = Material.END_STONE; break;
                     case 5: case 6: default: mat = Material.OBSIDIAN;
                     }
-                    block.getWorld().spawnFallingBlock(blockSoil.getLocation().add(0.5, 128.0, 0.5), mat.getNewData((byte)0)).setDropItem(false);
+                    block.getWorld().spawnFallingBlock(blockSoil.getLocation().add(0.5, 128.0, 0.5), mat.createBlockData()).setDropItem(false);
                 } else {
                     switch (blockSoil.getType()) {
                     case AIR: break;
@@ -343,20 +342,23 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                         blockSoil.setType(Material.NETHERRACK);
                         cooldownSoil = 10;
                         break;
-                    case LEAVES:
-                    case LEAVES_2:
+                    case ACACIA_LEAVES:
+                    case BIRCH_LEAVES:
+                    case DARK_OAK_LEAVES:
+                    case JUNGLE_LEAVES:
+                    case OAK_LEAVES:
+                    case SPRUCE_LEAVES:
+                    case LEGACY_LEAVES:
                         blockSoil.setType(Material.FIRE);
                         cooldownSoil = 10;
                         break;
                     case WATER:
-                    case STATIONARY_WATER:
-                        if (blockSoil.getData() == 0) {
+                        if (((org.bukkit.block.data.Levelled)blockSoil.getBlockData()).getLevel() == 0) {
                             blockSoil.setType(Material.ICE);
                             cooldownSoil = 3;
                         }
                         break;
                     case LAVA:
-                    case STATIONARY_LAVA:
                         blockSoil.setType(Material.OBSIDIAN);
                         cooldownSoil = 3;
                         break;
@@ -376,14 +378,15 @@ public final class MonsterHiveBlock implements CustomBlock, TickableBlock {
                     if (random.nextBoolean()) {
                         mat = Material.NETHER_BRICK;
                     } else {
-                        mat = Material.RED_NETHER_BRICK;
+                        mat = Material.RED_NETHER_BRICKS;
                     }
-                    block.getWorld().spawnFallingBlock(blockFort.getLocation().add(0.5, 128.0, 0.5), mat.getNewData((byte)0)).setDropItem(false);
+                    block.getWorld().spawnFallingBlock(blockFort.getLocation().add(0.5, 128.0, 0.5), mat.createBlockData()).setDropItem(false);
                 }
                 cooldownFort = 2;
             }
         }
 
+        @SuppressWarnings("unchecked")
         void load() {
             Map<String, Object> map = (Map<String, Object>)CustomPlugin.getInstance().getBlockManager().loadBlockData(this);
             if (map == null) return;
